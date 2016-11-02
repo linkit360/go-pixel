@@ -1,0 +1,22 @@
+server:
+  port: 50308
+  queue: pixels
+  threads_count: 1
+
+consumer:
+  uri: amqp://linkit:dg-U_oHhy7-@52.66.23.201:5672
+  queue_prefetch_count: 4
+  binding_key: ""
+  reconnect_delay: 10
+
+db:
+  conn_ttl: -1
+  max_conns: 15
+  timeout: 30
+  name: linkit_mobilink
+  user: linkit_mobilink
+  pass: A0kZN8pUAs63wePezz
+  port: 5432
+  host: linkit-mobilink.cb2q7f7mvbwr.ap-south-1.rds.amazonaws.com
+  ssl_mode: disable
+  table_prefix: xmp_
