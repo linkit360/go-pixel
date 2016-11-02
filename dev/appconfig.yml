@@ -4,9 +4,13 @@ server:
   threads_count: 1
 
 consumer:
-  uri: amqp://linkit:dg-U_oHhy7-@52.66.23.201:5672
+  conn:
+    user: linkit
+    pass: dg-U_oHhy7-
+    host: ec2-35-154-8-158.ap-south-1.compute.amazonaws.com
+    port: 5672
+
   queue_prefetch_count: 4
-  binding_key: ""
   reconnect_delay: 10
 
 db:
@@ -17,6 +21,6 @@ db:
   user: linkit_mobilink
   pass: A0kZN8pUAs63wePezz
   port: 5432
-  host: linkit-mobilink.cb2q7f7mvbwr.ap-south-1.rds.amazonaws.com
+  host: ec2-35-154-8-158.ap-south-1.compute.amazonaws.com
   ssl_mode: disable
   table_prefix: xmp_

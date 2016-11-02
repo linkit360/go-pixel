@@ -17,7 +17,7 @@ import (
 
 func RunServer() {
 	appConfig := config.LoadConfig()
-	service.InitService(appConfig.Service)
+	service.InitService(appConfig.Server, appConfig.DbConf, appConfig.Consumer)
 
 	nuCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(nuCPU)

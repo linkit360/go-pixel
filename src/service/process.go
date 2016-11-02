@@ -18,8 +18,8 @@ type Pixel struct {
 	Msisdn         string `json:"msisdn"`
 }
 type Metrics struct {
-	Dropped metrics.Counter
-	Empty   metrics.Counter
+	Dropped metrics.Gauge
+	Empty   metrics.Gauge
 }
 
 func initMetrics() Metrics {
@@ -76,7 +76,7 @@ func process(deliveries <-chan amqp.Delivery) {
 		}
 		query := fmt.Sprintf("UPDATE %ssubscriptions "+
 			" SET pixel_sent = $1,  "+
-			" SET pixel_send_at = $2  "+
+			" SET pixel_sent_at = $2  "+
 			" WHERE id = $3 ",
 			svc.conf.db.TablePrefix)
 
