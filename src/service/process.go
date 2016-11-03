@@ -14,6 +14,7 @@ import (
 type Pixel struct {
 	SubscriptionId int64  `json:"subscription_id"`
 	Pixel          string `json:"pixel"`
+	Publisher      string `json:"publisher"`
 	Tid            string `json:"tid"`
 	Msisdn         string `json:"msisdn"`
 }
