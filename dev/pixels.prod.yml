@@ -7,7 +7,7 @@ consumer:
   conn:
     user: linkit
     pass: dg-U_oHhy7-
-    host: linkit-mobilink.cb2q7f7mvbwr.ap-south-1.rds.amazonaws.com
+    host: localhost
     port: 5672
 
   queue_prefetch_count: 4

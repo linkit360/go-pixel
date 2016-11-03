@@ -39,6 +39,7 @@ func InitService(
 	}
 
 	svc.db = db.Init(dbConf)
+	initInMemory(dbConf)
 	svc.m = initMetrics()
 
 	// process consumer

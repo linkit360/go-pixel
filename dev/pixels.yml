@@ -2,7 +2,6 @@ server:
   port: 50308
   queue: pixels
   threads_count: 1
-  ratio: 0.5
 
 consumer:
   conn:
