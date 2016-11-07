@@ -39,15 +39,34 @@ type Pixel struct {
 	Sent           bool    `json:"sent"`
 }
 type Metrics struct {
-	Dropped metrics.Gauge
-	Empty   metrics.Gauge
+	Dropped  metrics.Gauge
+	Empty    metrics.Gauge
+	counters Counters
 }
 
 func initMetrics() Metrics {
-	return Metrics{
+	m := Metrics{
 		Dropped: expvar.NewGauge("dropped"),
 		Empty:   expvar.NewGauge("empty"),
 	}
+	go func() {
+		for range time.Tick(60 * time.Second) {
+			m.Empty = m.counters.Empty
+			m.Dropped = m.counters.Dropped
+			m.counters.Clear()
+		}
+	}()
+	return m
+}
+
+type Counters struct {
+	Dropped float64
+	Empty   float64
+}
+
+func (c *Counters) Clear() {
+	c.Dropped = .0
+	c.Empty = .0
 }
 
 type EventNotifyUserActions struct {
@@ -63,7 +82,7 @@ func process(deliveries <-chan amqp.Delivery) {
 
 		var e EventNotifyUserActions
 		if err := json.Unmarshal(msg.Body, &e); err != nil {
-			svc.m.Dropped.Add(1)
+			svc.m.counters.Dropped++
 
 			log.WithFields(log.Fields{
 				"error": err.Error(),
@@ -76,14 +95,15 @@ func process(deliveries <-chan amqp.Delivery) {
 
 		t := e.EventData
 		if t.Pixel == "" || t.Tid == "" {
-			svc.m.Dropped.Add(1)
-			svc.m.Empty.Add(1)
+			svc.m.counters.Dropped++
+			svc.m.counters.Empty++
 
 			log.WithFields(log.Fields{
 				"error": "Empty message",
 				"msg":   "dropped",
 				"pixel": string(msg.Body),
 			}).Error("no pixel or tid, discarding")
+
 			msg.Ack(false)
 			continue
 		}

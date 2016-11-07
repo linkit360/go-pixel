@@ -2,6 +2,7 @@ package service
 
 import (
 	"database/sql"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	amqp_driver "github.com/streadway/amqp"

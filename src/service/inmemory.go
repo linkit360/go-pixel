@@ -115,7 +115,7 @@ func (ps *PixelSettings) Reload() (err error) {
 		return
 	}
 
-	ps.Map = make(map[string]PixelSetting, len(records))
+	ps.Map = make(map[int64]PixelSetting, len(records))
 	for _, p := range records {
 		memPixels.pixels.Map[p.Id] = p
 	}
