@@ -16,6 +16,7 @@ type ServerConfig struct {
 	Port         string `default:"50308" yaml:"port"`
 	Queue        string `default:"pixels" yaml:"queue"`
 	ThreadsCount int    `default:"1" yaml:"threads_count"`
+	Env          string `default:"dev" yaml:"env"`
 }
 
 type AppConfig struct {

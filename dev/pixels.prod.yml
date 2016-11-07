@@ -2,6 +2,7 @@ server:
   port: 50308
   queue: pixels
   threads_count: 1
+  env: prod
 
 consumer:
   conn:

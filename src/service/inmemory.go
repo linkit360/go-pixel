@@ -10,6 +10,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/vostrok/db"
+	"strings"
 )
 
 var memPixels *inMemPixel
@@ -19,16 +20,6 @@ type inMemPixel struct {
 	dbConf db.DataBaseConfig
 	pixels *PixelSettings
 }
-
-//CREATE TABLE public.xmp_pixel_settings (
-//id SERIAL PRIMARY KEY ,
-//operator_code INTEGER NOT NULL DEFAULT 0,
-//country_code INTEGER NOT NULL DEFAULT 0,
-//publisher VARCHAR(511) NOT NULL DEFAULT '',
-//endpoint VARCHAR(2047) NOT NULL DEFAULT '',
-//pixels_enabled BOOLEAN NOT NULL DEFAULT false,
-//pixels_ratio INT NOT NULL DEFAULT 0
-//);
 
 func Get() *PixelSettings {
 	return memPixels.pixels
@@ -51,14 +42,31 @@ func initInMemory(conf db.DataBaseConfig) {
 
 type PixelSettings struct {
 	sync.RWMutex
-	Map map[int64]PixelSetting
+	ByKey map[string]PixelSetting
 }
 type PixelSetting struct {
 	Id           int64
+	CampaignId   int64
 	OperatorCode int64
+	Publisher    string
 	Endpoint     string
+	Timeout      int
 	Enabled      bool
 	Ratio        int
+	count        int
+}
+
+func (ps *PixelSetting) Ignore() bool {
+	ps.count = ps.count + 1
+	if ps.count == ps.Ratio {
+		ps.count = 0
+		return false
+	}
+	return true
+}
+
+func (ps *PixelSetting) key() string {
+	return strings.ToLower(fmt.Sprintf("%d-%d-%s", ps.CampaignId, ps.OperatorCode, ps.Publisher))
 }
 
 func (ps *PixelSettings) Reload() (err error) {
@@ -79,11 +87,15 @@ func (ps *PixelSettings) Reload() (err error) {
 
 	query := fmt.Sprintf("SELECT "+
 		"id, "+
+		"id_campaign, "+
 		"operator_code, "+
+		"publisher, "+
 		"endpoint, "+
+		"timeout, "+
 		"enabled, "+
 		"ratio "+
-		"FROM %spixel_settings",
+		"FROM %spixel_settings "+
+		"WHERE enabled = true",
 		memPixels.dbConf.TablePrefix)
 
 	var rows *sql.Rows
@@ -100,14 +112,18 @@ func (ps *PixelSettings) Reload() (err error) {
 
 		if err = rows.Scan(
 			&p.Id,
+			&p.CampaignId,
 			&p.OperatorCode,
+			&p.Publisher,
 			&p.Endpoint,
+			&p.Timeout,
 			&p.Enabled,
 			&p.Ratio,
 		); err != nil {
 			err = fmt.Errorf("rows.Scan: %s", err.Error())
 			return
 		}
+		p.count = 0
 		records = append(records, p)
 	}
 	if rows.Err() != nil {
@@ -115,9 +131,10 @@ func (ps *PixelSettings) Reload() (err error) {
 		return
 	}
 
-	ps.Map = make(map[int64]PixelSetting, len(records))
+	ps.ByKey = make(map[string]PixelSetting, len(records))
 	for _, p := range records {
-		memPixels.pixels.Map[p.Id] = p
+		memPixels.pixels.ByKey[p.key()] = p
 	}
+	log.WithField("pixels", fmt.Sprintf("%#v", memPixels.pixels.ByKey)).Debug("loaded pixels")
 	return nil
 }

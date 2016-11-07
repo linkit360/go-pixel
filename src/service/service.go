@@ -6,6 +6,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	amqp_driver "github.com/streadway/amqp"
 
+	"github.com/gin-gonic/gin"
 	"github.com/vostrok/db"
 	"github.com/vostrok/pixels/src/config"
 	"github.com/vostrok/rabbit"
@@ -57,4 +58,14 @@ func InitService(
 		}).Fatal("rbmq consumer: AnnounceQueue")
 	}
 	go svc.consumer.Handle(svc.records, process, serverConfig.ThreadsCount, serverConfig.Queue, serverConfig.Queue)
+}
+
+func AddPublisherHandler(r *gin.Engine) {
+	rg := r.Group("/publisher")
+	rg.GET("", status200ok)
+}
+
+func status200ok(c *gin.Context) {
+	c.Writer.WriteHeader(200)
+	c.Writer.Write([]byte("ok"))
 }

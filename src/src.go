@@ -26,6 +26,7 @@ func RunServer() {
 	r := gin.New()
 
 	service.AddCQRHandler(r)
+	service.AddPublisherHandler(r)
 
 	rg := r.Group("/debug")
 	rg.GET("/vars", expvar.Handler())
