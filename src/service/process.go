@@ -145,6 +145,7 @@ func process(deliveries <-chan amqp.Delivery) {
 				"pixel": t.Pixel,
 				"tid":   t.Tid,
 				"msg":   "dropped",
+				"key":   ps.key(),
 				"ratio": pixelSetting.Ratio,
 				"count": pixelSetting.count,
 			}).Info("ratio: must skip")

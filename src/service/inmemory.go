@@ -42,8 +42,9 @@ func initInMemory(conf db.DataBaseConfig) {
 
 type PixelSettings struct {
 	sync.RWMutex
-	ByKey map[string]PixelSetting
+	ByKey map[string]*PixelSetting
 }
+
 type PixelSetting struct {
 	Id           int64
 	CampaignId   int64
@@ -131,9 +132,9 @@ func (ps *PixelSettings) Reload() (err error) {
 		return
 	}
 
-	ps.ByKey = make(map[string]PixelSetting, len(records))
+	ps.ByKey = make(map[string]*PixelSetting, len(records))
 	for _, p := range records {
-		memPixels.pixels.ByKey[p.key()] = p
+		memPixels.pixels.ByKey[p.key()] = &p
 	}
 	log.WithField("pixels", fmt.Sprintf("%#v", memPixels.pixels.ByKey)).Debug("loaded pixels")
 	return nil
