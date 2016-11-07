@@ -51,8 +51,8 @@ func initMetrics() Metrics {
 	}
 	go func() {
 		for range time.Tick(60 * time.Second) {
-			m.Empty = m.counters.Empty
-			m.Dropped = m.counters.Dropped
+			m.Empty.Set(m.counters.Empty)
+			m.Dropped.Set(m.counters.Dropped)
 			m.counters.Clear()
 		}
 	}()
