@@ -1,4 +1,4 @@
-.PHONY: dev run build senddev sendprod
+.PHONY: dev rm run build senddev sendprod
 
 dev:
 	rm ./pixels; go build ; ./pixels;
@@ -6,10 +6,14 @@ dev:
 run:
 	./pixels
 
+rm:
+	 rm -v bin/pixels-linux-amd64; rm ~/linkit/pixels-linux-amd64;
+
+
 build:
-	rm -v bin/pixels-linux-amd64; \
 	export GOOS=linux; export GOARCH=amd64; \
-  go build -ldflags "-s -w" -o bin/pixels-linux-amd64
+  go build -ldflags "-s -w" -o bin/pixels-linux-amd64; cp bin/pixels-linux-amd64 ~/linkit/
+
 
 
 senddev:

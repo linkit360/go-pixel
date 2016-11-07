@@ -1,5 +1,9 @@
 package service
 
+// get queue messages from pixels
+// and send them to publisher
+// ack all ok in case of any error
+
 import (
 	"encoding/json"
 	"fmt"
@@ -11,21 +15,8 @@ import (
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/expvar"
 	"github.com/streadway/amqp"
+	"github.com/vostrok/pixels/src/notifier"
 )
-
-type Pixel struct {
-	Tid            string  `json:"tid,omitempty"`
-	Msisdn         string  `json:"msisdn,omitempty"`
-	CampaignId     int64   `json:"campaign_id,omitempty"`
-	SubscriptionId int64   `json:"subscription_id,omitempty"`
-	OperatorCode   int64   `json:"operator_code,omitempty"`
-	CountryCode    int64   `json:"country_code,omitempty"`
-	Pixel          string  `json:"pixel,omitempty"`
-	Publisher      string  `json:"publisher,omitempty"`
-	ResponseCode   int     `json:"response_code,omitempty"`
-	Took           float64 `json:"took,omitempty"`
-	Sent           bool    `json:"sent"`
-}
 
 type Metrics struct {
 	Dropped  metrics.Gauge
@@ -59,12 +50,14 @@ func (c *Counters) Clear() {
 }
 
 type EventNotifyUserActions struct {
-	EventName string `json:"event_name,omitempty"`
-	EventData Pixel  `json:"event_data,omitempty"`
+	EventName string         `json:"event_name,omitempty"`
+	EventData notifier.Pixel `json:"event_data,omitempty"`
 }
 
 func process(deliveries <-chan amqp.Delivery) {
 	for msg := range deliveries {
+		time.Sleep(time.Second)
+
 		log.WithFields(log.Fields{
 			"body": string(msg.Body),
 		}).Debug("start process")
@@ -97,11 +90,13 @@ func process(deliveries <-chan amqp.Delivery) {
 			continue
 		}
 
-		if len(t.Pixel) == 23 {
-			t.Publisher = "Mobusi"
-		}
-		if len(t.Pixel) == 55 {
-			t.Publisher = "Kimia"
+		if t.Publisher == "" {
+			if len(t.Pixel) == 23 {
+				t.Publisher = "Mobusi"
+			}
+			if len(t.Pixel) == 55 {
+				t.Publisher = "Kimia"
+			}
 		}
 		if t.Publisher == "" {
 			svc.m.counters.Dropped++
@@ -200,17 +195,21 @@ func process(deliveries <-chan amqp.Delivery) {
 		query := fmt.Sprintf("INSERT INTO %spixel_transactions ( "+
 			"tid, "+
 			"msisdn, "+
+			"pixel, "+
+			"endpoint, "+
 			"id_campaign, "+
 			"operator_code, "+
 			"country_code, "+
 			"publisher, "+
 			"response_code "+
-			") VALUES ( $1, $2, $3, $4, $5, $6, $7 )",
+			") VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, $9 )",
 			svc.conf.db.TablePrefix)
 
 		if _, err := svc.db.Exec(query,
 			t.Tid,
 			t.Msisdn,
+			t.Pixel,
+			endpoint,
 			t.CampaignId,
 			t.OperatorCode,
 			t.CountryCode,
@@ -232,12 +231,14 @@ func process(deliveries <-chan amqp.Delivery) {
 		}
 
 		query = fmt.Sprintf("UPDATE %ssubscriptions SET "+
-			" pixel_sent = $1,  "+
-			" pixel_sent_at = $2  "+
-			" WHERE id = $3 ",
+			" publisher = $1,  "+
+			" pixel_sent = $2,  "+
+			" pixel_sent_at = $3  "+
+			" WHERE id = $4 ",
 			svc.conf.db.TablePrefix)
 
 		if _, err := svc.db.Exec(query,
+			t.Publisher,
 			t.Sent,
 			time.Now(),
 			t.SubscriptionId,

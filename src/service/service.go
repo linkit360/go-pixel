@@ -1,5 +1,9 @@
 package service
 
+// Pixels is a callback interface for CPA publishers
+// * Get from queue pixels and send to publisher
+// * API interface to get from database and send to publisher
+
 import (
 	"database/sql"
 
@@ -9,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/vostrok/db"
 	"github.com/vostrok/pixels/src/config"
+	"github.com/vostrok/pixels/src/notifier"
 	"github.com/vostrok/rabbit"
 )
 
@@ -19,29 +24,37 @@ type Service struct {
 	records  <-chan amqp_driver.Delivery
 	db       *sql.DB
 	m        Metrics
+	n        notifier.Notifier
 	conf     Config
 }
 type Config struct {
+	service  config.ServiceConfig
 	server   config.ServerConfig
 	db       db.DataBaseConfig
 	consumer rabbit.ConsumerConfig
+	notifier notifier.NotifierConfig
 }
 
 func InitService(
+	svcConf config.ServiceConfig,
 	serverConfig config.ServerConfig,
 	dbConf db.DataBaseConfig,
 	consumerConfig rabbit.ConsumerConfig,
+	notifConf notifier.NotifierConfig,
 ) {
 	log.SetLevel(log.DebugLevel)
 	svc.conf = Config{
+		service:  svcConf,
 		server:   serverConfig,
 		db:       dbConf,
 		consumer: consumerConfig,
+		notifier: notifConf,
 	}
 
 	svc.db = db.Init(dbConf)
 	initInMemory(dbConf)
 	svc.m = initMetrics()
+	svc.n = notifier.NewNotifierService(notifConf)
 
 	// process consumer
 	svc.consumer = rabbit.NewConsumer(consumerConfig)

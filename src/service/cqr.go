@@ -1,5 +1,7 @@
 package service
 
+// CQR handler for pixel_settings table
+
 import (
 	"errors"
 	"net/http"

@@ -4,6 +4,12 @@ server:
   threads_count: 1
   env: prod
 
+service:
+  delay: 1
+  api:
+    limit: 500
+    hours: 0
+
 consumer:
   conn:
     user: linkit
@@ -25,3 +31,14 @@ db:
   host: linkit-mobilink.cb2q7f7mvbwr.ap-south-1.rds.amazonaws.com
   ssl_mode: disable
   table_prefix: xmp_
+
+notifier:
+  queue:
+    pixels: pixels
+  rbmq:
+    conn:
+      user: linkit
+      pass: dg-U_oHhy7-
+      host: localhost
+      port: 5672
+    chan_capacity: 10000000

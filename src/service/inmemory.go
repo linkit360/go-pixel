@@ -1,5 +1,8 @@
 package service
 
+// im-memory pixel settings
+// kept by key fmt.Sprintf("%d-%d-%s", ps.CampaignId, ps.OperatorCode, ps.Publisher)
+
 import (
 	"database/sql"
 	"fmt"

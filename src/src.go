@@ -17,7 +17,13 @@ import (
 
 func RunServer() {
 	appConfig := config.LoadConfig()
-	service.InitService(appConfig.Server, appConfig.DbConf, appConfig.Consumer)
+	service.InitService(
+		appConfig.Service,
+		appConfig.Server,
+		appConfig.DbConf,
+		appConfig.Consumer,
+		appConfig.Notifier,
+	)
 
 	nuCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(nuCPU)
@@ -25,6 +31,7 @@ func RunServer() {
 
 	r := gin.New()
 
+	service.AddPixelsHandler(r)
 	service.AddCQRHandler(r)
 	service.AddPublisherHandler(r)
 
