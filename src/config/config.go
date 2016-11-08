@@ -50,7 +50,6 @@ func LoadConfig() AppConfig {
 
 	appConfig.Server.Port = envString("PORT", appConfig.Server.Port)
 	appConfig.Consumer.Connection.Host = envString("RBMQ_HOST", appConfig.Consumer.Connection.Host)
-	appConfig.Notifier.Rbmq.Conn.Host = appConfig.Consumer.Connection.Host
 
 	log.WithField("config", fmt.Sprintf("%#v", appConfig)).Info("Config loaded")
 	return appConfig
