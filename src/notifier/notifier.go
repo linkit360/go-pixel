@@ -20,7 +20,7 @@ type Pixel struct {
 	Publisher      string  `json:"publisher,omitempty"`
 	ResponseCode   int     `json:"response_code,omitempty"`
 	Took           float64 `json:"took,omitempty"`
-	Sent           bool    `json:"sent"`
+	Sent           bool    `json:"sent,omitempty"`
 }
 
 type Notifier interface {

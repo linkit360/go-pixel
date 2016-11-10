@@ -12,33 +12,10 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/go-kit/kit/metrics"
-	"github.com/go-kit/kit/metrics/expvar"
 	"github.com/streadway/amqp"
 
 	"github.com/vostrok/pixels/src/notifier"
 )
-
-type Metrics struct {
-	Dropped  metrics.Gauge
-	Empty    metrics.Gauge
-	counters Counters
-}
-
-func initMetrics() Metrics {
-	m := Metrics{
-		Dropped: expvar.NewGauge("dropped"),
-		Empty:   expvar.NewGauge("empty"),
-	}
-	go func() {
-		for range time.Tick(60 * time.Second) {
-			m.Empty.Set(m.counters.Empty)
-			m.Dropped.Set(m.counters.Dropped)
-			m.counters.Clear()
-		}
-	}()
-	return m
-}
 
 type Counters struct {
 	Dropped float64
@@ -65,7 +42,7 @@ func process(deliveries <-chan amqp.Delivery) {
 
 		var e EventNotifyUserActions
 		if err := json.Unmarshal(msg.Body, &e); err != nil {
-			svc.m.counters.Dropped++
+			dropped.Inc()
 
 			log.WithFields(log.Fields{
 				"error": err.Error(),
@@ -78,8 +55,8 @@ func process(deliveries <-chan amqp.Delivery) {
 
 		t := e.EventData
 		if t.Pixel == "" || t.Tid == "" {
-			svc.m.counters.Dropped++
-			svc.m.counters.Empty++
+			dropped.Inc()
+			empty.Inc()
 
 			log.WithFields(log.Fields{
 				"error": "Empty message",
@@ -92,6 +69,7 @@ func process(deliveries <-chan amqp.Delivery) {
 		}
 
 		if t.Publisher == "" {
+
 			if len(t.Pixel) == 23 {
 				t.Publisher = "Mobusi"
 			}
@@ -100,8 +78,9 @@ func process(deliveries <-chan amqp.Delivery) {
 			}
 		}
 		if t.Publisher == "" {
-			svc.m.counters.Dropped++
-			svc.m.counters.Empty++
+			dropped.Inc()
+			empty.Inc()
+			emptyPublisher.Inc()
 			log.WithFields(log.Fields{
 				"error": "Empty publisher",
 				"msg":   "dropped",
@@ -109,6 +88,7 @@ func process(deliveries <-chan amqp.Delivery) {
 			msg.Ack(false)
 			continue
 		}
+
 		// send pixel
 		ps := PixelSetting{
 			Publisher:    t.Publisher,
@@ -117,6 +97,9 @@ func process(deliveries <-chan amqp.Delivery) {
 		}
 		pixelSetting, ok := memPixels.pixels.ByKey[ps.key()]
 		if !ok {
+			dropped.Inc()
+			emptySettings.Inc()
+
 			log.WithFields(log.Fields{
 				"error": "No settings",
 				"pixel": t.Pixel,
@@ -128,6 +111,8 @@ func process(deliveries <-chan amqp.Delivery) {
 			continue
 		}
 		if !pixelSetting.Enabled {
+			dropped.Inc()
+
 			log.WithFields(log.Fields{
 				"pixel": t.Pixel,
 				"tid":   t.Tid,
@@ -137,6 +122,7 @@ func process(deliveries <-chan amqp.Delivery) {
 			continue
 		}
 		if pixelSetting.Ignore() {
+			dropped.Inc()
 			log.WithFields(log.Fields{
 				"pixel": t.Pixel,
 				"tid":   t.Tid,
@@ -169,7 +155,12 @@ func process(deliveries <-chan amqp.Delivery) {
 		}
 
 		resp, err := client.Get(endpoint)
+		if err != nil || resp.StatusCode != 200 {
+			publisherError.Inc()
+		}
 		if err != nil {
+			dropped.Inc()
+
 			err = fmt.Errorf("client.Do: %s", err.Error())
 			log.WithFields(log.Fields{
 				"pixel":    t.Pixel,
@@ -190,7 +181,7 @@ func process(deliveries <-chan amqp.Delivery) {
 			"code":     resp.Status,
 		}).Debug("response")
 
-		if err == nil && resp.StatusCode == 200 {
+		if resp.StatusCode == 200 {
 			t.Sent = true
 		}
 		query := fmt.Sprintf("INSERT INTO %spixel_transactions ( "+
@@ -206,7 +197,7 @@ func process(deliveries <-chan amqp.Delivery) {
 			") VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, $9 )",
 			svc.conf.db.TablePrefix)
 
-		if _, err := svc.db.Exec(query,
+		if _, err = svc.db.Exec(query,
 			t.Tid,
 			t.Msisdn,
 			t.Pixel,
@@ -217,6 +208,7 @@ func process(deliveries <-chan amqp.Delivery) {
 			t.Publisher,
 			resp.StatusCode,
 		); err != nil {
+			dbError.Inc()
 			log.WithFields(log.Fields{
 				"tid":   t.Tid,
 				"pixel": t.Pixel,
@@ -238,12 +230,13 @@ func process(deliveries <-chan amqp.Delivery) {
 			" WHERE id = $4 ",
 			svc.conf.db.TablePrefix)
 
-		if _, err := svc.db.Exec(query,
+		if _, err = svc.db.Exec(query,
 			t.Publisher,
 			t.Sent,
 			time.Now(),
 			t.SubscriptionId,
 		); err != nil {
+			dbError.Inc()
 			log.WithFields(log.Fields{
 				"tid":   t.Tid,
 				"pixel": t.Pixel,
@@ -256,6 +249,10 @@ func process(deliveries <-chan amqp.Delivery) {
 				"tid":   t.Tid,
 				"pixel": t.Pixel,
 			}).Info("updated subscrption")
+		}
+
+		if err == nil {
+			success.Inc()
 		}
 
 		log.WithFields(log.Fields{

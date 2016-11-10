@@ -23,7 +23,6 @@ type Service struct {
 	consumer *rabbit.Consumer
 	records  <-chan amqp_driver.Delivery
 	db       *sql.DB
-	m        Metrics
 	n        notifier.Notifier
 	conf     Config
 }
@@ -51,9 +50,10 @@ func InitService(
 		notifier: notifConf,
 	}
 
+	initMetrics()
+
 	svc.db = db.Init(dbConf)
 	initInMemory(dbConf)
-	svc.m = initMetrics()
 	svc.n = notifier.NewNotifierService(notifConf)
 
 	// process consumer

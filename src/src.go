@@ -8,15 +8,17 @@ import (
 	"runtime"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/gin-gonic/contrib/expvar"
 	"github.com/gin-gonic/gin"
 
+	m "github.com/vostrok/metrics"
 	"github.com/vostrok/pixels/src/config"
 	"github.com/vostrok/pixels/src/service"
 )
 
 func RunServer() {
 	appConfig := config.LoadConfig()
+	m.Init(appConfig.Name)
+
 	service.InitService(
 		appConfig.Service,
 		appConfig.Server,
@@ -34,9 +36,7 @@ func RunServer() {
 	service.AddPixelsHandler(r)
 	service.AddCQRHandler(r)
 	service.AddPublisherHandler(r)
-
-	rg := r.Group("/debug")
-	rg.GET("/vars", expvar.Handler())
+	m.AddHandler(r)
 
 	r.Run(":" + appConfig.Server.Port)
 

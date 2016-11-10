@@ -1,3 +1,5 @@
+name: mumbai_pixels
+
 server:
   port: 50308
   queue: pixels

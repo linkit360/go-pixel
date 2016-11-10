@@ -2,12 +2,13 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"os"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/jinzhu/configor"
 
-	"fmt"
 	"github.com/vostrok/db"
 	"github.com/vostrok/pixels/src/notifier"
 	"github.com/vostrok/rabbit"
@@ -30,6 +31,7 @@ type APIConfig struct {
 }
 
 type AppConfig struct {
+	Name     string                  `yaml:"name"`
 	Service  ServiceConfig           `yaml:"service"`
 	Server   ServerConfig            `yaml:"server"`
 	Consumer rabbit.ConsumerConfig   `yaml:"consumer"`
@@ -46,6 +48,12 @@ func LoadConfig() AppConfig {
 		if err := configor.Load(&appConfig, *cfg); err != nil {
 			log.WithField("config", err.Error()).Fatal("config load error")
 		}
+	}
+	if appConfig.Name == "" {
+		log.Fatal("app name must be defiled as <host>_<name>")
+	}
+	if strings.Contains(appConfig.Name, "-") {
+		log.Fatal("app name must be without '-' : it's not a valid metric name")
 	}
 
 	appConfig.Server.Port = envString("PORT", appConfig.Server.Port)
