@@ -52,7 +52,7 @@ func init() {
 func NewNotifierService(conf NotifierConfig) Notifier {
 	var n Notifier
 	{
-		rabbit := rabbit.NewPublisher(conf.Rbmq, rabbit.InitMetrics("mt_manager"))
+		rabbit := rabbit.NewPublisher(conf.Rbmq, rabbit.InitPublisherMetrics())
 		n = &notifier{
 			q: queues{
 				PixelsQueue: conf.Queue.PixelsQueue,

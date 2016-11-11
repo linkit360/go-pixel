@@ -79,14 +79,13 @@ func (ps *PixelSettings) Reload() (err error) {
 
 	begin := time.Now()
 	defer func(err error) {
-		errStr := ""
-		if err != nil {
-			errStr = err.Error()
+		fields := log.Fields{
+			"took": time.Since(begin),
 		}
-		log.WithFields(log.Fields{
-			"error": errStr,
-			"took":  time.Since(begin),
-		}).Debug("pixels reload")
+		if err != nil {
+			fields["error"] = err.Error()
+		}
+		log.WithFields(fields).Debug("pixels reload")
 	}(err)
 
 	query := fmt.Sprintf("SELECT "+

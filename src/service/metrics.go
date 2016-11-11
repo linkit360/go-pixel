@@ -17,7 +17,7 @@ var (
 )
 
 func newGauge(name, help string) m.Gauge {
-	return m.NewCustomMetric("", name, " "+help)
+	return m.NewGaugeMetric("", name, " "+help)
 }
 func initMetrics() {
 

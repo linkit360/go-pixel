@@ -6,8 +6,8 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-
 	"github.com/gin-gonic/gin"
+
 	rec "github.com/vostrok/mt_manager/src/service/instance"
 	"github.com/vostrok/pixels/src/notifier"
 )
