@@ -1,45 +1,27 @@
 package service
 
 import (
-	"time"
+	"github.com/prometheus/client_golang/prometheus"
 
 	m "github.com/vostrok/metrics"
 )
 
 var (
-	dropped        m.Gauge
-	empty          m.Gauge
-	emptyPublisher m.Gauge
-	emptySettings  m.Gauge
-	publisherError m.Gauge
-	dbError        m.Gauge
-	success        m.Gauge
+	dropped        prometheus.Counter
+	empty          prometheus.Counter
+	emptyPublisher prometheus.Counter
+	emptySettings  prometheus.Counter
+	publisherError prometheus.Counter
+	addToDBErrors  prometheus.Counter
+	addToDbSuccess prometheus.Counter
 )
 
-func newGauge(name, help string) m.Gauge {
-	return m.NewGaugeMetric("", name, " "+help)
-}
 func initMetrics() {
-
-	empty = newGauge("empty", "Empty, invalid messages in queue")
-	dropped = newGauge("dropped", "Dropped messages in queue")
-	emptyPublisher = newGauge("empty_publisher", "Cannot determine publisher")
-	emptySettings = newGauge("empty_settings", "No settings found for this publisher")
-	publisherError = newGauge("publisher_error", "Request to publisher ended with error")
-	dbError = newGauge("db_error", "Any error connected with database occured")
-	success = newGauge("success", "Count of success")
-
-	go func() {
-		// metrics in prometheus as for 15s (default)
-		// so make for minute interval
-		for range time.Tick(time.Minute) {
-			empty.Update()
-			dropped.Update()
-			emptyPublisher.Update()
-			emptySettings.Update()
-			publisherError.Update()
-			dbError.Update()
-			success.Update()
-		}
-	}()
+	empty = m.NewCounter("empty", "Empty, invalid messages in queue")
+	dropped = m.NewCounter("dropped", "Dropped messages in queue")
+	emptyPublisher = m.NewCounter("empty_publisher", "Cannot determine publisher")
+	emptySettings = m.NewCounter("empty_settings", "No settings found for this publisher")
+	publisherError = m.NewCounter("publisher_error", "Request to publisher ended with error")
+	addToDBErrors = m.NewCounter("add_to_db_errors", "Any error connected with database occured")
+	addToDbSuccess = m.NewCounter("add_to_db_success", "Count of success")
 }

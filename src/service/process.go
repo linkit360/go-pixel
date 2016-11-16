@@ -208,7 +208,7 @@ func process(deliveries <-chan amqp.Delivery) {
 			t.Publisher,
 			resp.StatusCode,
 		); err != nil {
-			dbError.Inc()
+			addToDBErrors.Inc()
 			log.WithFields(log.Fields{
 				"tid":   t.Tid,
 				"pixel": t.Pixel,
@@ -236,7 +236,7 @@ func process(deliveries <-chan amqp.Delivery) {
 			time.Now(),
 			t.SubscriptionId,
 		); err != nil {
-			dbError.Inc()
+			addToDBErrors.Inc()
 			log.WithFields(log.Fields{
 				"tid":   t.Tid,
 				"pixel": t.Pixel,
@@ -252,7 +252,7 @@ func process(deliveries <-chan amqp.Delivery) {
 		}
 
 		if err == nil {
-			success.Inc()
+			addToDbSuccess.Inc()
 		}
 
 		log.WithFields(log.Fields{
