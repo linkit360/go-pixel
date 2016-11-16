@@ -37,7 +37,7 @@ type queues struct {
 
 type notifier struct {
 	q  queues
-	mq rabbit.AMQPService
+	mq *rabbit.Notifier
 }
 
 type EventNotify struct {
