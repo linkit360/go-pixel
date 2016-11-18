@@ -9,9 +9,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/jinzhu/configor"
 
-	"github.com/vostrok/db"
 	"github.com/vostrok/pixels/src/notifier"
-	"github.com/vostrok/rabbit"
+	"github.com/vostrok/utils/amqp"
+	"github.com/vostrok/utils/db"
 )
 
 type ServerConfig struct {

@@ -11,10 +11,10 @@ import (
 	amqp_driver "github.com/streadway/amqp"
 
 	"github.com/gin-gonic/gin"
-	"github.com/vostrok/db"
 	"github.com/vostrok/pixels/src/config"
 	"github.com/vostrok/pixels/src/notifier"
-	"github.com/vostrok/rabbit"
+	"github.com/vostrok/utils/amqp"
+	"github.com/vostrok/utils/db"
 )
 
 var svc Service

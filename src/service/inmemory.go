@@ -12,7 +12,9 @@ import (
 	"github.com/Sirupsen/logrus"
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/vostrok/db"
+	"github.com/gin-gonic/gin"
+	"github.com/vostrok/utils/cqr"
+	"github.com/vostrok/utils/db"
 	"strings"
 )
 
@@ -24,8 +26,18 @@ type inMemPixel struct {
 	pixels *PixelSettings
 }
 
-func Get() *PixelSettings {
-	return memPixels.pixels
+var inMemConf = []cqr.CQRConfig{{
+	Table:      "pixel_settings",
+	ReloadFunc: memPixels.pixels.Reload,
+},
+}
+
+func AddCQRHandlers(r *gin.Engine) {
+	cqr.AddCQRHandler(reloadCQRFunc, r)
+}
+
+func reloadCQRFunc(c *gin.Context) {
+	cqr.CQRReloadFunc(inMemConf, c)(c)
 }
 
 func initInMemory(conf db.DataBaseConfig) {
@@ -37,7 +49,7 @@ func initInMemory(conf db.DataBaseConfig) {
 		pixels: &PixelSettings{},
 	}
 
-	if err := memPixels.pixels.Reload(); err != nil {
+	if err := cqr.InitCQR(inMemConf); err != nil {
 		logrus.WithField("error", err.Error()).Fatal("reload pixels failed")
 	}
 
@@ -58,6 +70,10 @@ type PixelSetting struct {
 	Enabled      bool
 	Ratio        int
 	count        int
+}
+
+func Get() *PixelSettings {
+	return memPixels.pixels
 }
 
 func (ps *PixelSetting) Ignore() bool {

@@ -10,9 +10,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 
-	m "github.com/vostrok/metrics"
 	"github.com/vostrok/pixels/src/config"
 	"github.com/vostrok/pixels/src/service"
+	m "github.com/vostrok/utils/metrics"
 )
 
 func RunServer() {
@@ -34,7 +34,7 @@ func RunServer() {
 	r := gin.New()
 
 	service.AddPixelsHandler(r)
-	service.AddCQRHandler(r)
+	service.AddCQRHandlers(r)
 	service.AddPublisherHandler(r)
 	m.AddHandler(r)
 
