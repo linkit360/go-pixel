@@ -8,9 +8,9 @@ import (
 	"database/sql"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/gin-gonic/gin"
 	amqp_driver "github.com/streadway/amqp"
 
-	"github.com/gin-gonic/gin"
 	"github.com/vostrok/pixels/src/config"
 	"github.com/vostrok/pixels/src/notifier"
 	"github.com/vostrok/utils/amqp"
@@ -20,17 +20,17 @@ import (
 var svc Service
 
 type Service struct {
-	consumer *rabbit.Consumer
+	consumer *amqp.Consumer
+	n        notifier.Notifier
 	records  <-chan amqp_driver.Delivery
 	db       *sql.DB
-	n        notifier.Notifier
 	conf     Config
 }
 type Config struct {
 	service  config.ServiceConfig
 	server   config.ServerConfig
 	db       db.DataBaseConfig
-	consumer rabbit.ConsumerConfig
+	consumer amqp.ConsumerConfig
 	notifier notifier.NotifierConfig
 }
 
@@ -38,7 +38,7 @@ func InitService(
 	svcConf config.ServiceConfig,
 	serverConfig config.ServerConfig,
 	dbConf db.DataBaseConfig,
-	consumerConfig rabbit.ConsumerConfig,
+	consumerConfig amqp.ConsumerConfig,
 	notifConf notifier.NotifierConfig,
 ) {
 	log.SetLevel(log.DebugLevel)
@@ -56,21 +56,21 @@ func InitService(
 	initInMemory(dbConf)
 	svc.n = notifier.NewNotifierService(notifConf)
 
-	// process consumer
-	svc.consumer = rabbit.NewConsumer(consumerConfig)
+	// create consumer
+	svc.consumer = amqp.NewConsumer(consumerConfig)
 	if err := svc.consumer.Connect(); err != nil {
 		log.Fatal("rbmq consumer connect:", err.Error())
 	}
 
-	var err error
-	svc.records, err = svc.consumer.AnnounceQueue(serverConfig.Queue, serverConfig.Queue)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"queue": serverConfig.Queue,
-			"error": err.Error(),
-		}).Fatal("rbmq consumer: AnnounceQueue")
-	}
-	go svc.consumer.Handle(svc.records, process, serverConfig.ThreadsCount, serverConfig.Queue, serverConfig.Queue)
+	// queue for pixels requests
+	amqp.InitQueue(
+		svc.consumer,
+		svc.records,
+		processPixels,
+		serverConfig.ThreadsCount,
+		serverConfig.Queue,
+		serverConfig.Queue,
+	)
 }
 
 func AddPublisherHandler(r *gin.Engine) {

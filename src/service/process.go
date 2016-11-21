@@ -32,7 +32,7 @@ type EventNotifyUserActions struct {
 	EventData notifier.Pixel `json:"event_data,omitempty"`
 }
 
-func process(deliveries <-chan amqp.Delivery) {
+func processPixels(deliveries <-chan amqp.Delivery) {
 	for msg := range deliveries {
 		time.Sleep(time.Second)
 

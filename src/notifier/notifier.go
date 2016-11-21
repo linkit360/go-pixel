@@ -28,8 +28,8 @@ type Notifier interface {
 }
 
 type NotifierConfig struct {
-	Queue queues                `yaml:"queue"`
-	Rbmq  rabbit.NotifierConfig `yaml:"rbmq"`
+	Queue queues              `yaml:"queue"`
+	Rbmq  amqp.NotifierConfig `yaml:"rbmq"`
 }
 type queues struct {
 	PixelsQueue string `default:"pixels" yaml:"pixels"`
@@ -37,7 +37,7 @@ type queues struct {
 
 type notifier struct {
 	q  queues
-	mq *rabbit.Notifier
+	mq *amqp.Notifier
 }
 
 type EventNotify struct {
@@ -52,7 +52,7 @@ func init() {
 func NewNotifierService(conf NotifierConfig) Notifier {
 	var n Notifier
 	{
-		rabbit := rabbit.NewNotifier(conf.Rbmq)
+		rabbit := amqp.NewNotifier(conf.Rbmq)
 		n = &notifier{
 			q: queues{
 				PixelsQueue: conf.Queue.PixelsQueue,
@@ -75,6 +75,6 @@ func (service notifier) PixelNotify(msg Pixel) error {
 		return fmt.Errorf("json.Marshal: %s", err.Error())
 	}
 	log.WithField("body", string(body)).Debug("sent body")
-	service.mq.Publish(rabbit.AMQPMessage{service.q.PixelsQueue, body})
+	service.mq.Publish(amqp.AMQPMessage{service.q.PixelsQueue, body})
 	return nil
 }
