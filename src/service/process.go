@@ -14,6 +14,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/streadway/amqp"
 
+	inmem_client "github.com/vostrok/inmem/rpcclient"
+	inmem_service "github.com/vostrok/inmem/service"
 	"github.com/vostrok/pixels/src/notifier"
 )
 
@@ -90,23 +92,24 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		}
 
 		// send pixel
-		ps := PixelSetting{
+		ps := inmem_service.PixelSetting{
 			Publisher:    t.Publisher,
 			OperatorCode: t.OperatorCode,
 			CampaignId:   t.CampaignId,
 		}
-		pixelSetting, ok := memPixels.pixels.ByKey[ps.key()]
-		if !ok {
+		pixelSetting, err := inmem_client.GetPixelSettingByKeyWithRatio(ps.Key())
+		if err != nil {
+			err = fmt.Errorf("GetPixelSettingByKey: %s", err.Error())
 			dropped.Inc()
 			emptySettings.Inc()
 
 			log.WithFields(log.Fields{
-				"error": "No settings",
+				"error": err.Error(),
 				"pixel": t.Pixel,
 				"tid":   t.Tid,
 				"msg":   "dropped",
-				"key":   ps.key(),
-			}).Error("no pixel settings found")
+				"key":   ps.Key(),
+			}).Error("can't process pixel")
 			msg.Ack(false)
 			continue
 		}
@@ -121,15 +124,15 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			msg.Ack(false)
 			continue
 		}
-		if pixelSetting.Ignore() {
+		if pixelSetting.CanIgnore {
 			dropped.Inc()
 			log.WithFields(log.Fields{
 				"pixel": t.Pixel,
 				"tid":   t.Tid,
 				"msg":   "dropped",
-				"key":   ps.key(),
+				"key":   ps.Key(),
 				"ratio": pixelSetting.Ratio,
-				"count": pixelSetting.count,
+				"count": pixelSetting.Count,
 			}).Info("ratio: must skip")
 			msg.Ack(false)
 			continue
@@ -138,11 +141,10 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			"pixel": t.Pixel,
 			"tid":   t.Tid,
 			"ratio": pixelSetting.Ratio,
-			"count": pixelSetting.count,
+			"count": pixelSetting.Count,
 		}).Info("ratio rule: passed")
 
 		t.Sent = false
-		var err error
 		endpoint := ""
 		if svc.conf.server.Env == "dev" {
 			endpoint = "http://localhost:50308/publisher?aff_sub=%pixel%"

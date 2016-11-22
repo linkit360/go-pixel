@@ -22,6 +22,7 @@ func RunServer() {
 	service.InitService(
 		appConfig.Service,
 		appConfig.Server,
+		appConfig.InMemClientConfig,
 		appConfig.DbConf,
 		appConfig.Consumer,
 		appConfig.Notifier,
@@ -34,7 +35,6 @@ func RunServer() {
 	r := gin.New()
 
 	service.AddPixelsHandler(r)
-	service.AddCQRHandlers(r)
 	service.AddPublisherHandler(r)
 	m.AddHandler(r)
 

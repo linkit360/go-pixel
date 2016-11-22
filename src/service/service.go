@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	amqp_driver "github.com/streadway/amqp"
 
+	inmem_client "github.com/vostrok/inmem/rpcclient"
 	"github.com/vostrok/pixels/src/config"
 	"github.com/vostrok/pixels/src/notifier"
 	"github.com/vostrok/utils/amqp"
@@ -37,6 +38,7 @@ type Config struct {
 func InitService(
 	svcConf config.ServiceConfig,
 	serverConfig config.ServerConfig,
+	inMemConf inmem_client.RPCClientConfig,
 	dbConf db.DataBaseConfig,
 	consumerConfig amqp.ConsumerConfig,
 	notifConf notifier.NotifierConfig,
@@ -53,7 +55,9 @@ func InitService(
 	initMetrics()
 
 	svc.db = db.Init(dbConf)
-	initInMemory(dbConf)
+
+	inmem_client.Init(inMemConf)
+
 	svc.n = notifier.NewNotifierService(notifConf)
 
 	// create consumer

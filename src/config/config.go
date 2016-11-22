@@ -9,6 +9,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/jinzhu/configor"
 
+	inmem_client "github.com/vostrok/inmem/rpcclient"
 	"github.com/vostrok/pixels/src/notifier"
 	"github.com/vostrok/utils/amqp"
 	"github.com/vostrok/utils/db"
@@ -31,12 +32,13 @@ type APIConfig struct {
 }
 
 type AppConfig struct {
-	Name     string                  `yaml:"name"`
-	Service  ServiceConfig           `yaml:"service"`
-	Server   ServerConfig            `yaml:"server"`
-	Consumer amqp.ConsumerConfig     `yaml:"consumer"`
-	DbConf   db.DataBaseConfig       `yaml:"db"`
-	Notifier notifier.NotifierConfig `yaml:"notifier"`
+	Name              string                       `yaml:"name"`
+	Service           ServiceConfig                `yaml:"service"`
+	Server            ServerConfig                 `yaml:"server"`
+	InMemClientConfig inmem_client.RPCClientConfig `yaml:"inmem_client"`
+	Consumer          amqp.ConsumerConfig          `yaml:"consumer"`
+	DbConf            db.DataBaseConfig            `yaml:"db"`
+	Notifier          notifier.NotifierConfig      `yaml:"notifier"`
 }
 
 func LoadConfig() AppConfig {
