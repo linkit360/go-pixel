@@ -1,7 +1,7 @@
 name: mumbai_pixels
 
 server:
-  port: 50308
+  port: 50309
   queue: pixels
   threads_count: 1
   env: prod
