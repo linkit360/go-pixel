@@ -29,7 +29,7 @@ func (c *Counters) Clear() {
 	c.Empty = .0
 }
 
-type EventNotifyUserActions struct {
+type EventNotifyPixel struct {
 	EventName string         `json:"event_name,omitempty"`
 	EventData notifier.Pixel `json:"event_data,omitempty"`
 }
@@ -42,7 +42,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			"body": string(msg.Body),
 		}).Debug("start process")
 
-		var e EventNotifyUserActions
+		var e EventNotifyPixel
 		if err := json.Unmarshal(msg.Body, &e); err != nil {
 			dropped.Inc()
 
@@ -71,7 +71,6 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		}
 
 		if t.Publisher == "" {
-
 			if len(t.Pixel) == 23 {
 				t.Publisher = "Mobusi"
 			}
@@ -124,7 +123,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			msg.Ack(false)
 			continue
 		}
-		if pixelSetting.CanIgnore {
+		if pixelSetting.SkipPixelSend {
 			dropped.Inc()
 			log.WithFields(log.Fields{
 				"pixel": t.Pixel,
@@ -140,6 +139,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		log.WithFields(log.Fields{
 			"pixel": t.Pixel,
 			"tid":   t.Tid,
+			"skip":  pixelSetting.SkipPixelSend,
 			"ratio": pixelSetting.Ratio,
 			"count": pixelSetting.Count,
 		}).Info("ratio rule: passed")
@@ -196,7 +196,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			"country_code, "+
 			"publisher, "+
 			"response_code "+
-			") VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, $9 )",
+			") VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, $9)",
 			svc.conf.db.TablePrefix)
 
 		if _, err = svc.db.Exec(query,

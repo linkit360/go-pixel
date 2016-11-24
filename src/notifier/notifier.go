@@ -75,6 +75,6 @@ func (service notifier) PixelNotify(msg Pixel) error {
 		return fmt.Errorf("json.Marshal: %s", err.Error())
 	}
 	log.WithField("body", string(body)).Debug("sent body")
-	service.mq.Publish(amqp.AMQPMessage{service.q.PixelsQueue, body})
+	service.mq.Publish(amqp.AMQPMessage{service.q.PixelsQueue, 0, body})
 	return nil
 }
