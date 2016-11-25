@@ -17,6 +17,7 @@ import (
 	inmem_client "github.com/vostrok/inmem/rpcclient"
 	inmem_service "github.com/vostrok/inmem/service"
 	"github.com/vostrok/pixels/src/notifier"
+	"strconv"
 )
 
 type Counters struct {
@@ -33,6 +34,15 @@ type EventNotifyPixel struct {
 	EventName string         `json:"event_name,omitempty"`
 	EventData notifier.Pixel `json:"event_data,omitempty"`
 }
+
+// ==========
+// http://kbgames.net:10001/index.php?
+// pixel=1480041599mb08436761119
+// msisdn=923007001926
+// trxid=1611250740056626
+// trxtime=2016-11-25+07:40:23
+// country=pakistan
+// operator=mobilink
 
 func processPixels(deliveries <-chan amqp.Delivery) {
 	for msg := range deliveries {
@@ -147,11 +157,39 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		t.Sent = false
 		endpoint := ""
 		if svc.conf.server.Env == "dev" {
-			endpoint = "http://localhost:50308/publisher?aff_sub=%pixel%"
+			endpoint = "http://localhost:50308/publisher?" +
+				"aff_sub=%pixel%&" +
+				"msisdn=%msisdn%&" +
+				"trxid=%trxid%&" +
+				"trxtime=%time%&" +
+				"country=%country_name%&" +
+				"operator=%operator_name%&"
 		} else {
 			endpoint = pixelSetting.Endpoint
 		}
+
 		endpoint = strings.Replace(endpoint, "%pixel%", t.Pixel, 1)
+		endpoint = strings.Replace(endpoint, "%msisdn%", t.Msisdn, 1)
+		endpoint = strings.Replace(endpoint, "%trxid%", time.Now().Unix()+t.Msisdn, 1)
+		endpoint = strings.Replace(endpoint, "%time%", time.Now().UTC().String(), 1)
+
+		operator, err := inmem_client.GetOperatorByCode(t.OperatorCode)
+		if err != nil {
+			err = fmt.Errorf("GetPixelSettingByKey: %s", err.Error())
+			dropped.Inc()
+			emptySettings.Inc()
+
+			msg.Ack(false)
+			log.WithFields(log.Fields{
+				"pixel": t.Pixel,
+				"tid":   t.Tid,
+				"error": err.Error(),
+			}).Error("can't get operator name by code")
+			continue
+		}
+		endpoint = strings.Replace(endpoint, "%operator_name%", operator.Name, 1)
+		endpoint = strings.Replace(endpoint, "%country_name%", operator.CountryName, 1)
+
 		client := &http.Client{
 			Timeout: time.Duration(pixelSetting.Timeout) * time.Second,
 		}
