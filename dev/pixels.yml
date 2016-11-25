@@ -6,16 +6,27 @@ server:
   threads_count: 1
   env: dev
 
-
-inmem_client:
-  dsn: localhost:50307
-  timeout: 10
-
 service:
   delay: 1
   api:
     limit: 500
     hours: 0
+
+inmem_client:
+  dsn: localhost:50307
+  timeout: 10
+
+
+notifier:
+  queue:
+    pixels: pixels
+  rbmq:
+    conn:
+      user: linkit
+      pass: dg-U_oHhy7-
+      host: localhost
+      port: 5672
+    chan_capacity: 10000
 
 consumer:
   conn:
@@ -27,16 +38,6 @@ consumer:
   queue_prefetch_count: 4
   reconnect_delay: 10
 
-notifier:
-  queue:
-    pixels: pixels
-  rbmq:
-    conn:
-      user: linkit
-      pass: dg-U_oHhy7-
-      host: localhost
-      port: 5672
-    chan_capacity: 10000000
 
 db:
   conn_ttl: -1

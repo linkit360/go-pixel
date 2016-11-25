@@ -2,6 +2,7 @@ package service
 
 import (
 	m "github.com/vostrok/utils/metrics"
+	"time"
 )
 
 var (
@@ -24,4 +25,17 @@ func initMetrics() {
 	dbErrors = m.NewGauge("", "", "db_errors", "db errors")
 	addToDBErrors = m.NewGauge("", "", "add_to_db_errors", "Add to db error occured")
 	addToDbSuccess = m.NewGauge("", "", "add_to_db_success", "Count of success")
+
+	go func() {
+		for range time.Tick(time.Minute) {
+			empty.Update()
+			dropped.Update()
+			emptyPublisher.Update()
+			emptySettings.Update()
+			publisherError.Update()
+			dbErrors.Update()
+			addToDBErrors.Update()
+			addToDbSuccess.Update()
+		}
+	}()
 }
