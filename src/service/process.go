@@ -17,7 +17,6 @@ import (
 	inmem_client "github.com/vostrok/inmem/rpcclient"
 	inmem_service "github.com/vostrok/inmem/service"
 	"github.com/vostrok/pixels/src/notifier"
-	"strconv"
 )
 
 type Counters struct {
@@ -163,15 +162,15 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 				"trxid=%trxid%&" +
 				"trxtime=%time%&" +
 				"country=%country_name%&" +
-				"operator=%operator_name%&"
+				"operator=%operator_name%"
 		} else {
 			endpoint = pixelSetting.Endpoint
 		}
 
 		endpoint = strings.Replace(endpoint, "%pixel%", t.Pixel, 1)
 		endpoint = strings.Replace(endpoint, "%msisdn%", t.Msisdn, 1)
-		endpoint = strings.Replace(endpoint, "%trxid%", time.Now().Unix()+t.Msisdn, 1)
-		endpoint = strings.Replace(endpoint, "%time%", time.Now().UTC().String(), 1)
+		endpoint = strings.Replace(endpoint, "%trxid%", fmt.Sprintf("%d%s", time.Now().Unix(), t.Msisdn), 1)
+		endpoint = strings.Replace(endpoint, "%time%", time.Now().UTC().Format("2006-01-02 15:04:05"), 1)
 
 		operator, err := inmem_client.GetOperatorByCode(t.OperatorCode)
 		if err != nil {
