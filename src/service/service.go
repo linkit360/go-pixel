@@ -56,12 +56,14 @@ func InitService(
 
 	svc.db = db.Init(dbConf)
 
-	inmem_client.Init(inMemConf)
+	if err := inmem_client.Init(inMemConf); err != nil {
+		log.WithField("error", err.Error()).Fatal("inmem dial error")
+	}
 
 	svc.n = notifier.NewNotifierService(notifConf)
 
 	// create consumer
-	svc.consumer = amqp.NewConsumer(consumerConfig)
+	svc.consumer = amqp.NewConsumer(consumerConfig, serverConfig.Queue)
 	if err := svc.consumer.Connect(); err != nil {
 		log.Fatal("rbmq consumer connect:", err.Error())
 	}
