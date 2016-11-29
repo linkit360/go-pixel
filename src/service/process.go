@@ -135,28 +135,29 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		if pixelSetting.SkipPixelSend {
 			dropped.Inc()
 			log.WithFields(log.Fields{
-				"pixel": t.Pixel,
-				"tid":   t.Tid,
-				"msg":   "dropped",
-				"key":   ps.Key(),
-				"ratio": pixelSetting.Ratio,
-				"count": pixelSetting.Count,
+				"pixel":   t.Pixel,
+				"tid":     t.Tid,
+				"msg":     "dropped",
+				"key":     ps.Key(),
+				"setting": fmt.Sprintf("%#v", pixelSetting),
 			}).Info("ratio: must skip")
 			msg.Ack(false)
 			continue
 		}
 		log.WithFields(log.Fields{
-			"pixel": t.Pixel,
-			"tid":   t.Tid,
-			"skip":  pixelSetting.SkipPixelSend,
-			"ratio": pixelSetting.Ratio,
-			"count": pixelSetting.Count,
+			"pixel":   t.Pixel,
+			"tid":     t.Tid,
+			"skip":    pixelSetting.SkipPixelSend,
+			"ratio":   pixelSetting.Ratio,
+			"count":   pixelSetting.Count,
+			"key":     ps.Key(),
+			"setting": fmt.Sprintf("%#v", pixelSetting),
 		}).Info("ratio rule: passed")
 
 		t.Sent = false
 		endpoint := ""
 		if svc.conf.server.Env == "dev" {
-			endpoint = "http://localhost:50308/publisher?" +
+			endpoint = "http://localhost:50309/publisher?" +
 				"aff_sub=%pixel%&" +
 				"msisdn=%msisdn%&" +
 				"trxid=%trxid%&" +
@@ -170,7 +171,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		endpoint = strings.Replace(endpoint, "%pixel%", t.Pixel, 1)
 		endpoint = strings.Replace(endpoint, "%msisdn%", t.Msisdn, 1)
 		endpoint = strings.Replace(endpoint, "%trxid%", fmt.Sprintf("%d%s", time.Now().Unix(), t.Msisdn), 1)
-		endpoint = strings.Replace(endpoint, "%time%", time.Now().UTC().Format("2006-01-02 15:04:05"), 1)
+		endpoint = strings.Replace(endpoint, "%time%", time.Now().UTC().Format("2006-01-02+15:04:05"), 1)
 
 		operator, err := inmem_client.GetOperatorByCode(t.OperatorCode)
 		if err != nil {
