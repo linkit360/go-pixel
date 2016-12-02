@@ -82,7 +82,7 @@ func GetPixels(p Params) (int, error) {
 
 	if p.Hours > 0 {
 		query = query +
-			fmt.Sprintf(" AND (CURRENT_TIMESTAMP - %d * INTERVAL '1 hour' ) < created_at ", p.Hours)
+			fmt.Sprintf(" AND (CURRENT_TIMESTAMP - %d * INTERVAL '1 hour' ) > created_at ", p.Hours)
 	}
 	query = query + fmt.Sprintf(" ORDER BY id DESC LIMIT %d", p.Limit)
 

@@ -237,6 +237,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			") VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, $9)",
 			svc.conf.db.TablePrefix)
 
+		begin := time.Now()
 		if _, err = svc.db.Exec(query,
 			t.Tid,
 			t.Msisdn,
@@ -262,7 +263,8 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			log.WithFields(log.Fields{
 				"tid":   t.Tid,
 				"pixel": t.Pixel,
-			}).Info("updated pixel transaction")
+				"took":  time.Since(begin),
+			}).Info("added pixel transaction")
 		}
 
 		query = fmt.Sprintf("UPDATE %ssubscriptions SET "+
@@ -272,6 +274,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			" WHERE id = $4 ",
 			svc.conf.db.TablePrefix)
 
+		begin = time.Now()
 		if _, err = svc.db.Exec(query,
 			t.Publisher,
 			t.Sent,
@@ -290,6 +293,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			log.WithFields(log.Fields{
 				"tid":   t.Tid,
 				"pixel": t.Pixel,
+				"took":  time.Since(begin),
 			}).Info("updated subscrption")
 		}
 
