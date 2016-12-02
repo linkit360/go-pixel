@@ -19,16 +19,6 @@ import (
 	"github.com/vostrok/pixels/src/notifier"
 )
 
-type Counters struct {
-	Dropped float64
-	Empty   float64
-}
-
-func (c *Counters) Clear() {
-	c.Dropped = .0
-	c.Empty = .0
-}
-
 type EventNotifyPixel struct {
 	EventName string         `json:"event_name,omitempty"`
 	EventData notifier.Pixel `json:"event_data,omitempty"`
@@ -45,7 +35,7 @@ type EventNotifyPixel struct {
 
 func processPixels(deliveries <-chan amqp.Delivery) {
 	for msg := range deliveries {
-		time.Sleep(time.Second)
+		//time.Sleep(200 * time.Millisecond)
 
 		log.WithFields(log.Fields{
 			"body": string(msg.Body),
@@ -94,6 +84,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			log.WithFields(log.Fields{
 				"error": "Empty publisher",
 				"msg":   "dropped",
+				"pixel": string(msg.Body),
 			}).Error("cannot determine publisher")
 			msg.Ack(false)
 			continue
@@ -145,13 +136,11 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			continue
 		}
 		log.WithFields(log.Fields{
-			"pixel":   t.Pixel,
-			"tid":     t.Tid,
-			"skip":    pixelSetting.SkipPixelSend,
-			"ratio":   pixelSetting.Ratio,
-			"count":   pixelSetting.Count,
-			"key":     ps.Key(),
-			"setting": fmt.Sprintf("%#v", pixelSetting),
+			"pixel": t.Pixel,
+			"tid":   t.Tid,
+			"ratio": pixelSetting.Ratio,
+			"count": pixelSetting.Count,
+			"key":   ps.Key(),
 		}).Info("ratio rule: passed")
 
 		t.Sent = false
@@ -194,34 +183,24 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			Timeout: time.Duration(pixelSetting.Timeout) * time.Second,
 		}
 
-		resp, err := client.Get(endpoint)
-		if err != nil || resp.StatusCode != 200 {
+		resp, cleintErr := client.Get(endpoint)
+		if cleintErr != nil || resp.StatusCode != 200 {
 			publisherError.Inc()
 		}
-		if err != nil {
-			dropped.Inc()
 
-			err = fmt.Errorf("client.Do: %s", err.Error())
-			log.WithFields(log.Fields{
-				"pixel":    t.Pixel,
-				"tid":      t.Tid,
-				"campaign": t.CampaignId,
-				"url":      endpoint,
-				"error":    err.Error(),
-				"msg":      "dropped",
-			}).Error("call publisher failed")
-			msg.Ack(false)
-			continue
+		var statusCode int
+		if resp != nil {
+			statusCode = resp.StatusCode
 		}
 		log.WithFields(log.Fields{
 			"pixel":    t.Pixel,
 			"tid":      t.Tid,
 			"campaign": t.CampaignId,
 			"url":      endpoint,
-			"code":     resp.Status,
+			"code":     statusCode,
 		}).Debug("response")
 
-		if resp.StatusCode == 200 {
+		if statusCode == 200 {
 			t.Sent = true
 		}
 		query := fmt.Sprintf("INSERT INTO %spixel_transactions ( "+
@@ -247,7 +226,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			t.OperatorCode,
 			t.CountryCode,
 			t.Publisher,
-			resp.StatusCode,
+			statusCode,
 		); err != nil {
 			dbErrors.Inc()
 			addToDBErrors.Inc()
@@ -267,6 +246,10 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			}).Info("added pixel transaction")
 		}
 
+		if cleintErr != nil || statusCode != 200 {
+			msg.Ack(false)
+			continue
+		}
 		query = fmt.Sprintf("UPDATE %ssubscriptions SET "+
 			" publisher = $1,  "+
 			" pixel_sent = $2,  "+

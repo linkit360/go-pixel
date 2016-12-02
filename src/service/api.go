@@ -77,14 +77,15 @@ func GetPixels(p Params) (int, error) {
 		"publisher "+
 		" FROM %ssubscriptions "+
 		" WHERE pixel != '' "+
-		" AND pixel_sent = false ",
+		" AND pixel_sent = false "+
+		"AND result NOT IN ('', 'postpaid', 'blacklisted', 'rejected')",
 		svc.conf.db.TablePrefix)
 
 	if p.Hours > 0 {
 		query = query +
 			fmt.Sprintf(" AND (CURRENT_TIMESTAMP - %d * INTERVAL '1 hour' ) > created_at ", p.Hours)
 	}
-	query = query + fmt.Sprintf(" ORDER BY id DESC LIMIT %d", p.Limit)
+	query = query + fmt.Sprintf(" ORDER BY id ASC LIMIT %d", p.Limit)
 
 	rows, err := svc.db.Query(query)
 	if err != nil {
