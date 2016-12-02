@@ -78,7 +78,7 @@ func GetPixels(p Params) (int, error) {
 		" FROM %ssubscriptions "+
 		" WHERE pixel != '' "+
 		" AND pixel_sent = false "+
-		"AND result NOT IN ('', 'postpaid', 'blacklisted', 'rejected')",
+		"AND result NOT IN ('', 'postpaid', 'blacklisted', 'rejected', 'canceled')",
 		svc.conf.db.TablePrefix)
 
 	if p.Hours > 0 {
