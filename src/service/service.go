@@ -41,7 +41,7 @@ func InitService(
 	inMemConf inmem_client.RPCClientConfig,
 	dbConf db.DataBaseConfig,
 	consumerConfig amqp.ConsumerConfig,
-	notifConf notifier.NotifierConfig,
+	notifierConf notifier.NotifierConfig,
 ) {
 	log.SetLevel(log.DebugLevel)
 	svc.conf = Config{
@@ -49,7 +49,7 @@ func InitService(
 		server:   serverConfig,
 		db:       dbConf,
 		consumer: consumerConfig,
-		notifier: notifConf,
+		notifier: notifierConf,
 	}
 
 	initMetrics()
@@ -60,7 +60,7 @@ func InitService(
 		log.WithField("error", err.Error()).Fatal("inmem dial error")
 	}
 
-	svc.n = notifier.NewNotifierService(notifConf)
+	svc.n = notifier.NewNotifierService(notifierConf)
 
 	// create consumer
 	svc.consumer = amqp.NewConsumer(consumerConfig, serverConfig.Queue)

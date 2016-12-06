@@ -35,7 +35,6 @@ type EventNotifyPixel struct {
 
 func processPixels(deliveries <-chan amqp.Delivery) {
 	for msg := range deliveries {
-		//time.Sleep(200 * time.Millisecond)
 
 		log.WithFields(log.Fields{
 			"body": string(msg.Body),
@@ -50,8 +49,8 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 				"msg":   "dropped",
 				"pixel": string(msg.Body),
 			}).Error("consume pixel")
-			msg.Ack(false)
-			continue
+
+			goto ack
 		}
 
 		t := e.EventData
@@ -64,9 +63,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 				"msg":   "dropped",
 				"pixel": string(msg.Body),
 			}).Error("no pixel or tid, discarding")
-
-			msg.Ack(false)
-			continue
+			goto ack
 		}
 
 		if t.Publisher == "" {
@@ -86,8 +83,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 				"msg":   "dropped",
 				"pixel": string(msg.Body),
 			}).Error("cannot determine publisher")
-			msg.Ack(false)
-			continue
+			goto ack
 		}
 
 		// send pixel
@@ -109,8 +105,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 				"msg":   "dropped",
 				"key":   ps.Key(),
 			}).Error("can't process pixel")
-			msg.Ack(false)
-			continue
+			goto ack
 		}
 		if !pixelSetting.Enabled {
 			dropped.Inc()
@@ -120,8 +115,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 				"tid":   t.Tid,
 				"msg":   "dropped",
 			}).Debug("send pixel disabled")
-			msg.Ack(false)
-			continue
+			goto ack
 		}
 		if pixelSetting.SkipPixelSend {
 			dropped.Inc()
@@ -132,8 +126,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 				"key":     ps.Key(),
 				"setting": fmt.Sprintf("%#v", pixelSetting),
 			}).Info("ratio: must skip")
-			msg.Ack(false)
-			continue
+			goto ack
 		}
 		log.WithFields(log.Fields{
 			"pixel": t.Pixel,
@@ -168,13 +161,12 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			dropped.Inc()
 			emptySettings.Inc()
 
-			msg.Ack(false)
 			log.WithFields(log.Fields{
 				"pixel": t.Pixel,
 				"tid":   t.Tid,
 				"error": err.Error(),
 			}).Error("can't get operator name by code")
-			continue
+			goto ack
 		}
 		endpoint = strings.Replace(endpoint, "%operator_name%", operator.Name, 1)
 		endpoint = strings.Replace(endpoint, "%country_name%", operator.CountryName, 1)
@@ -191,6 +183,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		var statusCode int
 		if resp != nil {
 			statusCode = resp.StatusCode
+			t.ResponseCode = resp.StatusCode
 		}
 		log.WithFields(log.Fields{
 			"pixel":    t.Pixel,
@@ -203,86 +196,43 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		if statusCode == 200 {
 			t.Sent = true
 		}
-		query := fmt.Sprintf("INSERT INTO %spixel_transactions ( "+
-			"tid, "+
-			"msisdn, "+
-			"pixel, "+
-			"endpoint, "+
-			"id_campaign, "+
-			"operator_code, "+
-			"country_code, "+
-			"publisher, "+
-			"response_code "+
-			") VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, $9)",
-			svc.conf.db.TablePrefix)
-
-		begin := time.Now()
-		if _, err = svc.db.Exec(query,
-			t.Tid,
-			t.Msisdn,
-			t.Pixel,
-			endpoint,
-			t.CampaignId,
-			t.OperatorCode,
-			t.CountryCode,
-			t.Publisher,
-			statusCode,
-		); err != nil {
-			dbErrors.Inc()
-			addToDBErrors.Inc()
-
+		if err := svc.n.PixelTransactionNotify(t); err != nil {
 			log.WithFields(log.Fields{
 				"tid":   t.Tid,
 				"pixel": t.Pixel,
-				"query": query,
 				"error": err.Error(),
-				"msg":   "dropped",
-			}).Error("record pixel transaction failed")
+			}).Error("cannot send pixel transaction")
 		} else {
 			log.WithFields(log.Fields{
 				"tid":   t.Tid,
 				"pixel": t.Pixel,
-				"took":  time.Since(begin),
-			}).Info("add pixel: success")
+			}).Info("sent pixel transaction")
 		}
 
 		if cleintErr != nil || statusCode != 200 {
-			msg.Ack(false)
-			continue
+			goto ack
 		}
-		query = fmt.Sprintf("UPDATE %ssubscriptions SET "+
-			" publisher = $1,  "+
-			" pixel_sent = $2,  "+
-			" pixel_sent_at = $3  "+
-			" WHERE id = $4 ",
-			svc.conf.db.TablePrefix)
 
-		begin = time.Now()
-		if _, err = svc.db.Exec(query,
-			t.Publisher,
-			t.Sent,
-			time.Now(),
-			t.SubscriptionId,
-		); err != nil {
-			dbErrors.Inc()
+		if err := svc.n.PixelUpdateSubscriptionNotify(t); err != nil {
 			log.WithFields(log.Fields{
 				"tid":   t.Tid,
 				"pixel": t.Pixel,
-				"query": query,
 				"error": err.Error(),
-				"msg":   "dropped",
-			}).Error("update subscription pixel sent")
+			}).Error("cannot send pixel update subscription")
 		} else {
 			log.WithFields(log.Fields{
 				"tid":   t.Tid,
 				"pixel": t.Pixel,
-				"took":  time.Since(begin),
-			}).Info("update subscrption: success")
+			}).Info("sent pixel update subscription")
 		}
-
-		if err == nil {
-			addToDbSuccess.Inc()
+	ack:
+		if err := msg.Ack(false); err != nil {
+			log.WithFields(log.Fields{
+				"tid":   e.EventData.Tid,
+				"error": err.Error(),
+			}).Error("cannot ack")
+			time.Sleep(time.Second)
+			goto ack
 		}
-		msg.Ack(false)
 	}
 }

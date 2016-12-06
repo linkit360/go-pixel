@@ -18,6 +18,7 @@ type Pixel struct {
 	CountryCode    int64   `json:"country_code,omitempty"`
 	Pixel          string  `json:"pixel,omitempty"`
 	Publisher      string  `json:"publisher,omitempty"`
+	Endpoint       string  `json:"endpoint,omitempty"`
 	ResponseCode   int     `json:"response_code,omitempty"`
 	Took           float64 `json:"took,omitempty"`
 	Sent           bool    `json:"sent,omitempty"`
@@ -25,6 +26,8 @@ type Pixel struct {
 
 type Notifier interface {
 	PixelNotify(msg Pixel) error
+	PixelTransactionNotify(msg Pixel) error
+	PixelUpdateSubscriptionNotify(msg Pixel) error
 }
 
 type NotifierConfig struct {
@@ -75,6 +78,32 @@ func (service notifier) PixelNotify(msg Pixel) error {
 		return fmt.Errorf("json.Marshal: %s", err.Error())
 	}
 	log.WithField("body", string(body)).Debug("sent body")
+	service.mq.Publish(amqp.AMQPMessage{service.q.PixelsQueue, 0, body})
+	return nil
+}
+
+func (service notifier) PixelTransactionNotify(msg Pixel) error {
+	event := EventNotify{
+		EventName: "transaction",
+		EventData: msg,
+	}
+	body, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("json.Marshal: %s", err.Error())
+	}
+	service.mq.Publish(amqp.AMQPMessage{service.q.PixelsQueue, 0, body})
+	return nil
+}
+
+func (service notifier) PixelUpdateSubscriptionNotify(msg Pixel) error {
+	event := EventNotify{
+		EventName: "update",
+		EventData: msg,
+	}
+	body, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("json.Marshal: %s", err.Error())
+	}
 	service.mq.Publish(amqp.AMQPMessage{service.q.PixelsQueue, 0, body})
 	return nil
 }
