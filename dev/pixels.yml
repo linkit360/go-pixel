@@ -20,6 +20,7 @@ inmem_client:
 notifier:
   queue:
     pixels: pixels
+    pixel_sent: pixel_sent
   rbmq:
     conn:
       user: linkit
@@ -27,6 +28,7 @@ notifier:
       host: localhost
       port: 5672
     chan_capacity: 10000
+    pending_buffer_path: /home/centos/linkit/pixels_pending.json
 
 consumer:
   conn:

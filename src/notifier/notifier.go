@@ -35,7 +35,8 @@ type NotifierConfig struct {
 	Rbmq  amqp.NotifierConfig `yaml:"rbmq"`
 }
 type queues struct {
-	PixelsQueue string `default:"pixels" yaml:"pixels"`
+	PixelsQueue    string `default:"pixels" yaml:"pixels"`
+	PixelSentQueue string `default:"pixel_sent" yaml:"pixel_sent"`
 }
 
 type notifier struct {
@@ -91,7 +92,7 @@ func (service notifier) PixelTransactionNotify(msg Pixel) error {
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %s", err.Error())
 	}
-	service.mq.Publish(amqp.AMQPMessage{service.q.PixelsQueue, 0, body})
+	service.mq.Publish(amqp.AMQPMessage{service.q.PixelSentQueue, 0, body})
 	return nil
 }
 
@@ -104,6 +105,6 @@ func (service notifier) PixelUpdateSubscriptionNotify(msg Pixel) error {
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %s", err.Error())
 	}
-	service.mq.Publish(amqp.AMQPMessage{service.q.PixelsQueue, 0, body})
+	service.mq.Publish(amqp.AMQPMessage{service.q.PixelSentQueue, 0, body})
 	return nil
 }
