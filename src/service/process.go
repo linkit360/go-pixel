@@ -243,7 +243,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 				"tid":   t.Tid,
 				"pixel": t.Pixel,
 				"took":  time.Since(begin),
-			}).Info("added pixel transaction")
+			}).Info("add pixel: success")
 		}
 
 		if cleintErr != nil || statusCode != 200 {
@@ -277,18 +277,12 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 				"tid":   t.Tid,
 				"pixel": t.Pixel,
 				"took":  time.Since(begin),
-			}).Info("updated subscrption")
+			}).Info("update subscrption: success")
 		}
 
 		if err == nil {
 			addToDbSuccess.Inc()
 		}
-
-		log.WithFields(log.Fields{
-			"tid":   t.Tid,
-			"pixel": t.Pixel,
-			"queue": "pixels",
-		}).Info("processed")
 		msg.Ack(false)
 	}
 }
