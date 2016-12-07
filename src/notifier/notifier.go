@@ -58,9 +58,7 @@ func NewNotifierService(conf NotifierConfig) Notifier {
 	{
 		rabbit := amqp.NewNotifier(conf.Rbmq)
 		n = &notifier{
-			q: queues{
-				PixelsQueue: conf.Queue.PixelsQueue,
-			},
+			q:  conf.Queue,
 			mq: rabbit,
 		}
 	}
