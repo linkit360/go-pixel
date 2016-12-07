@@ -13,7 +13,7 @@ service:
     hours: 0
 
 inmem_client:
-  dsn: localhost:50307
+  port: 50307
   timeout: 10
 
 
