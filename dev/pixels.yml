@@ -2,11 +2,14 @@ name: mumbai_pixels
 
 server:
   port: 50309
-  queue: pixels
-  threads_count: 1
   env: dev
 
 service:
+  queue:
+    name: pixels
+    prefetch_count: 10
+    threads_count: 10
+
   delay: 1
   api:
     limit: 500

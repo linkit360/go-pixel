@@ -12,19 +12,18 @@ import (
 	inmem_client "github.com/vostrok/inmem/rpcclient"
 	"github.com/vostrok/pixels/src/notifier"
 	"github.com/vostrok/utils/amqp"
+	"github.com/vostrok/utils/config"
 	"github.com/vostrok/utils/db"
 )
 
 type ServerConfig struct {
-	Port         string `default:"50308" yaml:"port"`
-	Queue        string `default:"pixels" yaml:"queue"`
-	ThreadsCount int    `default:"1" yaml:"threads_count"`
-	Env          string `default:"dev" yaml:"env"`
+	Port string `default:"50308" yaml:"port"`
+	Env  string `default:"dev" yaml:"env"`
 }
-
 type ServiceConfig struct {
-	Delay int       `default:"1" yaml:"delay"`
-	Api   APIConfig `yaml:"api"`
+	Delay int                       `default:"1" yaml:"delay"`
+	Queue config.ConsumeQueueConfig `yaml:"queue"`
+	Api   APIConfig                 `yaml:"api"`
 }
 type APIConfig struct {
 	DefaultLimit       int `default:"500" yaml:"limit"`

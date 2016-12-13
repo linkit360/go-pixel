@@ -63,7 +63,11 @@ func InitService(
 	svc.n = notifier.NewNotifierService(notifierConf)
 
 	// create consumer
-	svc.consumer = amqp.NewConsumer(consumerConfig, serverConfig.Queue)
+	svc.consumer = amqp.NewConsumer(
+		consumerConfig,
+		svc.conf.service.Queue.Name,
+		svc.conf.service.Queue.PrefetchCount,
+	)
 	if err := svc.consumer.Connect(); err != nil {
 		log.Fatal("rbmq consumer connect:", err.Error())
 	}
@@ -73,9 +77,9 @@ func InitService(
 		svc.consumer,
 		svc.records,
 		processPixels,
-		serverConfig.ThreadsCount,
-		serverConfig.Queue,
-		serverConfig.Queue,
+		svc.conf.service.Queue.ThreadsCount,
+		svc.conf.service.Queue.Name,
+		svc.conf.service.Queue.Name,
 	)
 }
 

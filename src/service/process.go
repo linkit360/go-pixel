@@ -95,7 +95,6 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			}).Error("cannot determine publisher")
 			goto ack
 		}
-
 		// send pixel
 		ps = inmem_service.PixelSetting{
 			Publisher:    t.Publisher,
@@ -188,11 +187,19 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		resp, cleintErr = client.Get(t.Endpoint)
 		if cleintErr != nil || resp.StatusCode != 200 {
 			publisherError.Inc()
+		} else {
+			Success.Inc()
 		}
-
+		log.WithFields(log.Fields{
+			"resp": fmt.Sprintf("%#v", resp),
+		}).Debug("response")
 		if resp != nil {
 			statusCode = resp.StatusCode
 			t.ResponseCode = resp.StatusCode
+		}
+
+		if statusCode == 200 {
+			t.Sent = true
 		}
 		log.WithFields(log.Fields{
 			"pixel":    t.Pixel,
@@ -200,11 +207,9 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			"campaign": t.CampaignId,
 			"url":      t.Endpoint,
 			"code":     statusCode,
+			"sent":     t.Sent,
 		}).Debug("response")
 
-		if statusCode == 200 {
-			t.Sent = true
-		}
 		if err := svc.n.PixelTransactionNotify(t); err != nil {
 			log.WithFields(log.Fields{
 				"tid":   t.Tid,

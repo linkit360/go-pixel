@@ -115,7 +115,7 @@ func GetPixels(p Params) (int, error) {
 	}
 
 	for _, v := range records {
-		go svc.n.PixelNotify(notifier.Pixel{
+		svc.n.PixelNotify(notifier.Pixel{
 			Tid:            v.Tid,
 			Msisdn:         v.Msisdn,
 			CampaignId:     v.CampaignId,
@@ -125,6 +125,10 @@ func GetPixels(p Params) (int, error) {
 			Pixel:          v.Pixel,
 			Publisher:      v.Publisher,
 		})
+		log.WithFields(log.Fields{
+			"tid":   v.Tid,
+			"pixel": v.Pixel,
+		}).Debug("sent")
 	}
 
 	return len(records), nil
