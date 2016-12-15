@@ -3,6 +3,7 @@ package notifier
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -10,18 +11,19 @@ import (
 )
 
 type Pixel struct {
-	Tid            string  `json:"tid,omitempty"`
-	Msisdn         string  `json:"msisdn,omitempty"`
-	CampaignId     int64   `json:"campaign_id,omitempty"`
-	SubscriptionId int64   `json:"subscription_id,omitempty"`
-	OperatorCode   int64   `json:"operator_code,omitempty"`
-	CountryCode    int64   `json:"country_code,omitempty"`
-	Pixel          string  `json:"pixel,omitempty"`
-	Publisher      string  `json:"publisher,omitempty"`
-	Endpoint       string  `json:"endpoint,omitempty"`
-	ResponseCode   int     `json:"response_code,omitempty"`
-	Took           float64 `json:"took,omitempty"`
-	Sent           bool    `json:"sent,omitempty"`
+	Tid            string    `json:"tid,omitempty"`
+	Msisdn         string    `json:"msisdn,omitempty"`
+	CampaignId     int64     `json:"campaign_id,omitempty"`
+	SubscriptionId int64     `json:"subscription_id,omitempty"`
+	OperatorCode   int64     `json:"operator_code,omitempty"`
+	CountryCode    int64     `json:"country_code,omitempty"`
+	Pixel          string    `json:"pixel,omitempty"`
+	Publisher      string    `json:"publisher,omitempty"`
+	Endpoint       string    `json:"endpoint,omitempty"`
+	ResponseCode   int       `json:"response_code,omitempty"`
+	Took           float64   `json:"took,omitempty"`
+	Sent           bool      `json:"sent,omitempty"`
+	SentAt         time.Time `json:"sent_at,omitempty"`
 }
 
 type Notifier interface {
@@ -66,8 +68,8 @@ func NewNotifierService(conf NotifierConfig) Notifier {
 }
 
 func (service notifier) PixelNotify(msg Pixel) error {
+	msg.SentAt = time.Now().UTC()
 	log.WithField("pixel", fmt.Sprintf("%#v", msg)).Debug("got pixel")
-
 	event := EventNotify{
 		EventName: "pixels",
 		EventData: msg,
@@ -82,6 +84,7 @@ func (service notifier) PixelNotify(msg Pixel) error {
 }
 
 func (service notifier) PixelTransactionNotify(msg Pixel) error {
+	msg.SentAt = time.Now().UTC()
 	event := EventNotify{
 		EventName: "transaction",
 		EventData: msg,
@@ -95,6 +98,7 @@ func (service notifier) PixelTransactionNotify(msg Pixel) error {
 }
 
 func (service notifier) PixelUpdateSubscriptionNotify(msg Pixel) error {
+	msg.SentAt = time.Now().UTC()
 	event := EventNotify{
 		EventName: "update",
 		EventData: msg,
