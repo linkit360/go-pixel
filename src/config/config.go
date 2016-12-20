@@ -31,13 +31,14 @@ type APIConfig struct {
 }
 
 type AppConfig struct {
-	Name              string                       `yaml:"name"`
-	Service           ServiceConfig                `yaml:"service"`
-	Server            ServerConfig                 `yaml:"server"`
-	InMemClientConfig inmem_client.RPCClientConfig `yaml:"inmem_client"`
-	Consumer          amqp.ConsumerConfig          `yaml:"consumer"`
-	DbConf            db.DataBaseConfig            `yaml:"db"`
-	Notifier          notifier.NotifierConfig      `yaml:"notifier"`
+	MetricInstancePrefix string                       `yaml:"metric_instance_prefix"`
+	AppName              string                       `yaml:"app_name"`
+	Service              ServiceConfig                `yaml:"service"`
+	Server               ServerConfig                 `yaml:"server"`
+	InMemClientConfig    inmem_client.RPCClientConfig `yaml:"inmem_client"`
+	Consumer             amqp.ConsumerConfig          `yaml:"consumer"`
+	DbConf               db.DataBaseConfig            `yaml:"db"`
+	Notifier             notifier.NotifierConfig      `yaml:"notifier"`
 }
 
 func LoadConfig() AppConfig {
@@ -50,11 +51,17 @@ func LoadConfig() AppConfig {
 			log.WithField("config", err.Error()).Fatal("config load error")
 		}
 	}
-	if appConfig.Name == "" {
+	if appConfig.AppName == "" {
 		log.Fatal("app name must be defiled as <host>_<name>")
 	}
-	if strings.Contains(appConfig.Name, "-") {
+	if strings.Contains(appConfig.AppName, "-") {
 		log.Fatal("app name must be without '-' : it's not a valid metric name")
+	}
+	if appConfig.MetricInstancePrefix == "" {
+		log.Fatal("metric_instance_prefix be defiled as <host>_<name>")
+	}
+	if strings.Contains(appConfig.MetricInstancePrefix, "-") {
+		log.Fatal("metric_instance_prefix be without '-' : it's not a valid metric name")
 	}
 
 	appConfig.Server.Port = envString("PORT", appConfig.Server.Port)

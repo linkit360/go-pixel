@@ -53,6 +53,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		var e EventNotifyPixel
 		if err := json.Unmarshal(msg.Body, &e); err != nil {
 			dropped.Inc()
+			Errors.Inc()
 
 			log.WithFields(log.Fields{
 				"error": err.Error(),
@@ -67,6 +68,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		if t.Pixel == "" || t.Tid == "" {
 			dropped.Inc()
 			empty.Inc()
+			Errors.Inc()
 
 			log.WithFields(log.Fields{
 				"error": "Empty message",
@@ -88,6 +90,8 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			dropped.Inc()
 			empty.Inc()
 			emptyPublisher.Inc()
+			Errors.Inc()
+
 			log.WithFields(log.Fields{
 				"error": "Empty publisher",
 				"msg":   "dropped",
@@ -211,6 +215,8 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		}).Debug("response")
 
 		if err := svc.n.PixelTransactionNotify(t); err != nil {
+			Errors.Inc()
+
 			log.WithFields(log.Fields{
 				"tid":   t.Tid,
 				"pixel": t.Pixel,
@@ -228,6 +234,8 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		}
 
 		if err := svc.n.PixelUpdateSubscriptionNotify(t); err != nil {
+			Errors.Inc()
+
 			log.WithFields(log.Fields{
 				"tid":   t.Tid,
 				"pixel": t.Pixel,

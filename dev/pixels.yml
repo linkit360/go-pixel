@@ -1,4 +1,5 @@
-name: mumbai_pixels
+metric_instance_prefix: pk_mobilink1
+app_name: pixels
 
 server:
   port: 50309

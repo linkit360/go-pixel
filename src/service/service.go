@@ -36,6 +36,7 @@ type Config struct {
 }
 
 func InitService(
+	appName string,
 	svcConf config.ServiceConfig,
 	serverConfig config.ServerConfig,
 	inMemConf inmem_client.RPCClientConfig,
@@ -52,7 +53,7 @@ func InitService(
 		notifier: notifierConf,
 	}
 
-	initMetrics()
+	initMetrics(appName)
 
 	svc.db = db.Init(dbConf)
 
