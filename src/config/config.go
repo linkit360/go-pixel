@@ -21,7 +21,6 @@ type ServerConfig struct {
 	Env  string `default:"dev" yaml:"env"`
 }
 type ServiceConfig struct {
-	Delay int                       `default:"1" yaml:"delay"`
 	Queue config.ConsumeQueueConfig `yaml:"queue"`
 	Api   APIConfig                 `yaml:"api"`
 }

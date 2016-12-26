@@ -17,6 +17,7 @@ import (
 	inmem_client "github.com/vostrok/inmem/rpcclient"
 	inmem_service "github.com/vostrok/inmem/service"
 	"github.com/vostrok/pixels/src/notifier"
+	"regexp"
 )
 
 type EventNotifyPixel struct {
@@ -32,6 +33,8 @@ type EventNotifyPixel struct {
 // trxtime=2016-11-25+07:40:23
 // country=pakistan
 // operator=mobilink
+
+var slimSpotRe = regexp.MustCompile(`16122[0-9a-z]{3}_[0-9a-z]{2}_533_[0-9a-z]{16}`)
 
 func processPixels(deliveries <-chan amqp.Delivery) {
 	var client *http.Client
@@ -85,7 +88,11 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			if len(t.Pixel) == 55 {
 				t.Publisher = "Kimia"
 			}
+			if slimSpotRe.MatchString(t.Pixel) {
+				t.Publisher = "SlimSpot"
+			}
 		}
+
 		if t.Publisher == "" {
 			dropped.Inc()
 			empty.Inc()
