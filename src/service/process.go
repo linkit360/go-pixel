@@ -91,6 +91,23 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			if slimSpotRe.MatchString(t.Pixel) {
 				t.Publisher = "SlimSpot"
 			}
+			if t.Publisher == "" {
+				publishers, err := inmem_client.GetAllPublishers()
+				if err != nil {
+					log.WithFields(log.Fields{
+						"error": err.Error(),
+						"msg":   "dropped",
+						"pixel": string(msg.Body),
+					}).Error("cannot determine publisher")
+					goto ack
+				}
+				for _, publisher := range publishers {
+					if publisher.Regex.MatchString(t.Pixel) {
+						t.Publisher = publisher.Name
+						break
+					}
+				}
+			}
 		}
 
 		if t.Publisher == "" {
