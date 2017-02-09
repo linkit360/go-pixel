@@ -125,9 +125,8 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		}
 		// send pixel
 		ps = inmem_service.PixelSetting{
-			Publisher:    t.Publisher,
-			OperatorCode: t.OperatorCode,
-			CampaignId:   t.CampaignId,
+			Publisher:  t.Publisher,
+			CampaignId: t.CampaignId,
 		}
 		ps, err = inmem_client.GetPixelSettingByKeyWithRatio(ps.Key())
 		if err != nil {
@@ -140,7 +139,6 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 				"pixel": t.Pixel,
 				"tid":   t.Tid,
 				"msg":   "dropped",
-				"key":   ps.Key(),
 			}).Error("can't process pixel")
 			goto ack
 		}
@@ -160,7 +158,6 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 				"pixel":   t.Pixel,
 				"tid":     t.Tid,
 				"msg":     "dropped",
-				"key":     ps.Key(),
 				"setting": fmt.Sprintf("%#v", ps),
 			}).Info("ratio: must skip")
 			goto ack
@@ -170,7 +167,6 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			"tid":   t.Tid,
 			"ratio": ps.Ratio,
 			"count": ps.Count,
-			"key":   ps.Key(),
 		}).Info("ratio rule: passed")
 
 		t.Sent = false
