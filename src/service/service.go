@@ -21,11 +21,13 @@ import (
 var svc Service
 
 type Service struct {
-	consumer *amqp.Consumer
-	n        notifier.Notifier
-	records  <-chan amqp_driver.Delivery
-	db       *sql.DB
-	conf     Config
+	consumer              *amqp.Consumer
+	restorePixelsConsumer *amqp.Consumer
+	n                     notifier.Notifier
+	sendPixelsCh          <-chan amqp_driver.Delivery
+	restorePixelsCh       <-chan amqp_driver.Delivery
+	db                    *sql.DB
+	conf                  Config
 }
 type Config struct {
 	service  config.ServiceConfig
@@ -76,11 +78,31 @@ func InitService(
 	// queue for pixels requests
 	amqp.InitQueue(
 		svc.consumer,
-		svc.records,
+		svc.sendPixelsCh,
 		processPixels,
 		svc.conf.service.Queue.ThreadsCount,
 		svc.conf.service.Queue.Name,
 		svc.conf.service.Queue.Name,
+	)
+
+	// restore pixels consumer
+	svc.restorePixelsConsumer = amqp.NewConsumer(
+		consumerConfig,
+		svc.conf.service.RestorePixels.Name,
+		svc.conf.service.RestorePixels.PrefetchCount,
+	)
+	if err := svc.restorePixelsConsumer.Connect(); err != nil {
+		log.Fatal("rbmq consumer connect:", err.Error())
+	}
+
+	// queue for pixels requests
+	amqp.InitQueue(
+		svc.restorePixelsConsumer,
+		svc.restorePixelsCh,
+		processRestorePixels,
+		svc.conf.service.RestorePixels.ThreadsCount,
+		svc.conf.service.RestorePixels.Name,
+		svc.conf.service.RestorePixels.Name,
 	)
 }
 

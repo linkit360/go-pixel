@@ -21,8 +21,9 @@ type ServerConfig struct {
 	Env  string `default:"dev" yaml:"env"`
 }
 type ServiceConfig struct {
-	Queue config.ConsumeQueueConfig `yaml:"queue"`
-	Api   APIConfig                 `yaml:"api"`
+	Queue         config.ConsumeQueueConfig `yaml:"queue"`
+	RestorePixels config.ConsumeQueueConfig `yaml:"restore_pixels"`
+	Api           APIConfig                 `yaml:"api"`
 }
 type APIConfig struct {
 	DefaultLimit       int `default:"500" yaml:"limit"`

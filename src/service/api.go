@@ -1,9 +1,7 @@
 package service
 
 import (
-	"fmt"
 	"strconv"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
@@ -43,77 +41,11 @@ func api(c *gin.Context) {
 		Hours: hours,
 	}
 
-	count, err := GetPixels(params)
+	records, err := rec.GetNotSentPixels(params.Hours, params.Limit)
 	if err != nil {
 		c.JSON(500, err.Error())
 		return
 	}
-	c.JSON(200, count)
-}
-
-// get not sent pixels
-func GetPixels(p Params) (int, error) {
-	var records []rec.Record
-
-	log.WithFields(log.Fields{
-		"count":  len(records),
-		"params": fmt.Sprintf("%#v", p),
-	}).Debug("get pixels")
-
-	begin := time.Now()
-	defer func() {
-		log.WithFields(log.Fields{
-			"took": time.Since(begin),
-		}).Debug("get pixels")
-	}()
-	query := fmt.Sprintf("SELECT "+
-		"tid, "+
-		"msisdn, "+
-		"id_campaign, "+
-		"id, "+
-		"operator_code, "+
-		"country_code, "+
-		"pixel, "+
-		"publisher "+
-		" FROM %ssubscriptions "+
-		" WHERE pixel != '' "+
-		" AND pixel_sent = false "+
-		"AND result NOT IN ('', 'postpaid', 'blacklisted', 'rejected', 'canceled')",
-		svc.conf.db.TablePrefix)
-
-	if p.Hours > 0 {
-		query = query +
-			fmt.Sprintf(" AND (CURRENT_TIMESTAMP - %d * INTERVAL '1 hour' ) > sent_at ", p.Hours)
-	}
-	query = query + fmt.Sprintf(" ORDER BY id ASC LIMIT %d", p.Limit)
-
-	rows, err := svc.db.Query(query)
-	if err != nil {
-		return 0, fmt.Errorf("db.Query: %s, query: %s", err.Error(), query)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		record := rec.Record{}
-
-		if err := rows.Scan(
-			&record.Tid,
-			&record.Msisdn,
-			&record.CampaignId,
-			&record.SubscriptionId,
-			&record.OperatorCode,
-			&record.CountryCode,
-			&record.Pixel,
-			&record.Publisher,
-		); err != nil {
-			return 0, fmt.Errorf("rows.Scan: %s", err.Error())
-		}
-		records = append(records, record)
-	}
-	if rows.Err() != nil {
-		return 0, fmt.Errorf("row.Err: %s", err.Error())
-	}
-
 	for _, v := range records {
 		svc.n.PixelNotify(notifier.Pixel{
 			Tid:            v.Tid,
@@ -131,5 +63,9 @@ func GetPixels(p Params) (int, error) {
 		}).Debug("sent")
 	}
 
-	return len(records), nil
+	if err != nil {
+		c.JSON(500, err.Error())
+		return
+	}
+	c.JSON(200, len(records))
 }

@@ -204,10 +204,26 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		t.Endpoint = strings.Replace(t.Endpoint, "%operator_name%", operator.Name, 1)
 		t.Endpoint = strings.Replace(t.Endpoint, "%country_name%", operator.CountryName, 1)
 
+		defer func() {
+			if err := svc.n.PixelUpdateSubscriptionNotify(t); err != nil {
+				Errors.Inc()
+
+				log.WithFields(log.Fields{
+					"tid":   t.Tid,
+					"pixel": t.Pixel,
+					"error": err.Error(),
+				}).Error("cannot send pixel update subscription")
+			} else {
+				log.WithFields(log.Fields{
+					"tid":   t.Tid,
+					"pixel": t.Pixel,
+				}).Info("sent pixel update subscription")
+			}
+		}()
+
 		client = &http.Client{
 			Timeout: time.Duration(ps.Timeout) * time.Second,
 		}
-
 		resp, cleintErr = client.Get(t.Endpoint)
 		if cleintErr != nil || resp.StatusCode != 200 {
 			publisherError.Inc()
@@ -253,20 +269,6 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			goto ack
 		}
 
-		if err := svc.n.PixelUpdateSubscriptionNotify(t); err != nil {
-			Errors.Inc()
-
-			log.WithFields(log.Fields{
-				"tid":   t.Tid,
-				"pixel": t.Pixel,
-				"error": err.Error(),
-			}).Error("cannot send pixel update subscription")
-		} else {
-			log.WithFields(log.Fields{
-				"tid":   t.Tid,
-				"pixel": t.Pixel,
-			}).Info("sent pixel update subscription")
-		}
 	ack:
 		if err := msg.Ack(false); err != nil {
 			log.WithFields(log.Fields{

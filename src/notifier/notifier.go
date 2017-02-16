@@ -30,6 +30,7 @@ type Notifier interface {
 	PixelNotify(msg Pixel) error
 	PixelTransactionNotify(msg Pixel) error
 	PixelUpdateSubscriptionNotify(msg Pixel) error
+	PixelRemoveBufferedNotify(msg Pixel) error
 }
 
 type NotifierConfig struct {
@@ -108,5 +109,19 @@ func (service notifier) PixelUpdateSubscriptionNotify(msg Pixel) error {
 		return fmt.Errorf("json.Marshal: %s", err.Error())
 	}
 	service.mq.Publish(amqp.AMQPMessage{service.q.PixelSentQueue, 0, body})
+	return nil
+}
+
+func (service notifier) PixelRemoveBufferedNotify(msg Pixel) error {
+	msg.SentAt = time.Now().UTC()
+	event := EventNotify{
+		EventName: "remove_buffered",
+		EventData: msg,
+	}
+	body, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("json.Marshal: %s", err.Error())
+	}
+	service.mq.Publish(amqp.AMQPMessage{service.q.PixelsQueue, 1, body})
 	return nil
 }
