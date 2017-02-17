@@ -5,12 +5,16 @@ server:
   env: dev
 
 service:
-  queue:
+  pixels:
     name: pixels
     prefetch_count: 10
     threads_count: 10
 
-  delay: 1
+  restore_pixels:
+    name: restore_pixels
+    prefetch_count: 10
+    threads_count: 10
+
   api:
     limit: 500
     hours: 0

@@ -16,6 +16,7 @@ import (
 	"github.com/vostrok/pixels/src/notifier"
 	"github.com/vostrok/utils/amqp"
 	"github.com/vostrok/utils/db"
+	"github.com/vostrok/utils/rec"
 )
 
 var svc Service
@@ -57,7 +58,7 @@ func InitService(
 
 	initMetrics(appName)
 
-	svc.db = db.Init(dbConf)
+	rec.Init(dbConf)
 
 	if err := inmem_client.Init(inMemConf); err != nil {
 		log.WithField("error", err.Error()).Fatal("inmem dial error")
@@ -68,8 +69,8 @@ func InitService(
 	// create consumer
 	svc.consumer = amqp.NewConsumer(
 		consumerConfig,
-		svc.conf.service.Queue.Name,
-		svc.conf.service.Queue.PrefetchCount,
+		svc.conf.service.Pixels.Name,
+		svc.conf.service.Pixels.PrefetchCount,
 	)
 	if err := svc.consumer.Connect(); err != nil {
 		log.Fatal("rbmq consumer connect:", err.Error())
@@ -80,9 +81,9 @@ func InitService(
 		svc.consumer,
 		svc.sendPixelsCh,
 		processPixels,
-		svc.conf.service.Queue.ThreadsCount,
-		svc.conf.service.Queue.Name,
-		svc.conf.service.Queue.Name,
+		svc.conf.service.Pixels.ThreadsCount,
+		svc.conf.service.Pixels.Name,
+		svc.conf.service.Pixels.Name,
 	)
 
 	// restore pixels consumer

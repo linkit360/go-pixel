@@ -21,8 +21,10 @@ func processRestorePixels(deliveries <-chan amqp.Delivery) {
 		var r rec.Record
 		var err error
 		var t notifier.Pixel
+		var restoredPixel notifier.Pixel
 
 		log.WithFields(log.Fields{
+			"q":    svc.conf.service.RestorePixels.Name,
 			"body": string(msg.Body),
 		}).Debug("start process")
 
@@ -34,6 +36,7 @@ func processRestorePixels(deliveries <-chan amqp.Delivery) {
 			log.WithFields(log.Fields{
 				"error": err.Error(),
 				"msg":   "dropped",
+				"q":     svc.conf.service.RestorePixels.Name,
 				"pixel": string(msg.Body),
 			}).Error("consume pixel")
 
@@ -45,6 +48,7 @@ func processRestorePixels(deliveries <-chan amqp.Delivery) {
 			log.WithFields(log.Fields{
 				"error": "no msisdn",
 				"msg":   "dropped",
+				"q":     svc.conf.service.RestorePixels.Name,
 				"body":  string(msg.Body),
 			}).Error("cann't process")
 			goto ack
@@ -53,16 +57,7 @@ func processRestorePixels(deliveries <-chan amqp.Delivery) {
 			log.WithFields(log.Fields{
 				"error": "no campaign id",
 				"msg":   "dropped",
-				"body":  string(msg.Body),
-			}).Error("cann't process")
-			goto ack
-		}
-
-		r, err = rec.GetSubscriptionByMsisdn(t.Msisdn)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err.Error(),
-				"msg":   "dropped",
+				"q":     svc.conf.service.RestorePixels.Name,
 				"body":  string(msg.Body),
 			}).Error("cann't process")
 			goto ack
@@ -73,20 +68,22 @@ func processRestorePixels(deliveries <-chan amqp.Delivery) {
 			log.WithFields(log.Fields{
 				"error": err.Error(),
 				"msg":   "dropped",
+				"q":     svc.conf.service.RestorePixels.Name,
 				"body":  string(msg.Body),
 			}).Error("cann't process")
 			goto ack
 		}
 
-		if err := svc.n.PixelNotify(notifier.Pixel{
-			Tid:            r.Tid,
-			Msisdn:         r.Msisdn,
-			CampaignId:     r.CampaignId,
-			SubscriptionId: r.SubscriptionId,
-			OperatorCode:   r.OperatorCode,
-			CountryCode:    r.CountryCode,
-			Pixel:          t.Pixel,
-		}); err != nil {
+		restoredPixel = notifier.Pixel{
+			Tid:            t.Tid,
+			Msisdn:         t.Msisdn,
+			CampaignId:     t.CampaignId,
+			SubscriptionId: t.SubscriptionId,
+			OperatorCode:   t.OperatorCode,
+			CountryCode:    t.CountryCode,
+			Pixel:          r.Pixel,
+		}
+		if err := svc.n.PixelNotify(restoredPixel); err != nil {
 			log.WithFields(log.Fields{
 				"tid":   t.Tid,
 				"error": err.Error(),
@@ -95,24 +92,16 @@ func processRestorePixels(deliveries <-chan amqp.Delivery) {
 			continue
 		} else {
 			log.WithFields(log.Fields{
-				"tid":   t.Tid,
-				"pixel": t.Pixel,
+				"tid":    t.Tid,
+				"oldtid": r.Tid,
 			}).Debug("sent")
 
-			if err := svc.n.PixelRemoveBufferedNotify(notifier.Pixel{
-				Tid:            r.Tid,
-				Msisdn:         r.Msisdn,
-				CampaignId:     r.CampaignId,
-				SubscriptionId: r.SubscriptionId,
-				OperatorCode:   r.OperatorCode,
-				CountryCode:    r.CountryCode,
-				Pixel:          t.Pixel,
-			}); err != nil {
+			if err := svc.n.PixelRemoveBufferedNotify(restoredPixel); err != nil {
 				log.WithFields(log.Fields{
 					"error": err.Error(),
 					"tid":   t.Tid,
 					"pixel": t.Pixel,
-				}).Debug("remove sent")
+				}).Warn("remove sent")
 			}
 		}
 

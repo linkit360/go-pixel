@@ -50,6 +50,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		var t notifier.Pixel
 
 		log.WithFields(log.Fields{
+			"q":    svc.conf.service.Pixels.Name,
 			"body": string(msg.Body),
 		}).Debug("start process")
 
@@ -61,6 +62,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			log.WithFields(log.Fields{
 				"error": err.Error(),
 				"msg":   "dropped",
+				"q":     svc.conf.service.Pixels.Name,
 				"pixel": string(msg.Body),
 			}).Error("consume pixel")
 
@@ -76,6 +78,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			log.WithFields(log.Fields{
 				"error": "Empty message",
 				"msg":   "dropped",
+				"q":     svc.conf.service.Pixels.Name,
 				"pixel": string(msg.Body),
 			}).Error("no pixel or tid, discarding")
 			goto ack
@@ -97,6 +100,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 					log.WithFields(log.Fields{
 						"error": err.Error(),
 						"msg":   "dropped",
+						"q":     svc.conf.service.Pixels.Name,
 						"pixel": string(msg.Body),
 					}).Error("cannot determine publisher")
 					goto ack
@@ -119,6 +123,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			log.WithFields(log.Fields{
 				"error": "Empty publisher",
 				"msg":   "dropped",
+				"q":     svc.conf.service.Pixels.Name,
 				"pixel": string(msg.Body),
 			}).Error("cannot determine publisher")
 			goto ack
@@ -147,6 +152,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 
 			log.WithFields(log.Fields{
 				"pixel": t.Pixel,
+				"q":     svc.conf.service.Pixels.Name,
 				"tid":   t.Tid,
 				"msg":   "dropped",
 			}).Debug("send pixel disabled")
@@ -157,6 +163,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			log.WithFields(log.Fields{
 				"pixel":   t.Pixel,
 				"tid":     t.Tid,
+				"q":       svc.conf.service.Pixels.Name,
 				"msg":     "dropped",
 				"setting": fmt.Sprintf("%#v", ps),
 			}).Info("ratio: must skip")
@@ -166,6 +173,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			"pixel": t.Pixel,
 			"tid":   t.Tid,
 			"ratio": ps.Ratio,
+			"q":     svc.conf.service.Pixels.Name,
 			"count": ps.Count,
 		}).Info("ratio rule: passed")
 
@@ -197,6 +205,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			log.WithFields(log.Fields{
 				"pixel": t.Pixel,
 				"tid":   t.Tid,
+				"q":     svc.conf.service.Pixels.Name,
 				"error": err.Error(),
 			}).Error("can't get operator name by code")
 			goto ack
@@ -211,11 +220,13 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 				log.WithFields(log.Fields{
 					"tid":   t.Tid,
 					"pixel": t.Pixel,
+					"q":     svc.conf.service.Pixels.Name,
 					"error": err.Error(),
 				}).Error("cannot send pixel update subscription")
 			} else {
 				log.WithFields(log.Fields{
 					"tid":   t.Tid,
+					"q":     svc.conf.service.Pixels.Name,
 					"pixel": t.Pixel,
 				}).Info("sent pixel update subscription")
 			}
@@ -231,6 +242,8 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			Success.Inc()
 		}
 		log.WithFields(log.Fields{
+			"tid":  t.Tid,
+			"q":    svc.conf.service.Pixels.Name,
 			"resp": fmt.Sprintf("%#v", resp),
 		}).Debug("response")
 		if resp != nil {
@@ -247,6 +260,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			"campaign": t.CampaignId,
 			"url":      t.Endpoint,
 			"code":     statusCode,
+			"q":        svc.conf.service.Pixels.Name,
 			"sent":     t.Sent,
 		}).Debug("response")
 
@@ -257,11 +271,13 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 				"tid":   t.Tid,
 				"pixel": t.Pixel,
 				"error": err.Error(),
+				"q":     svc.conf.service.Pixels.Name,
 			}).Error("cannot send pixel transaction")
 		} else {
 			log.WithFields(log.Fields{
 				"tid":   t.Tid,
 				"pixel": t.Pixel,
+				"q":     svc.conf.service.Pixels.Name,
 			}).Info("sent pixel transaction")
 		}
 

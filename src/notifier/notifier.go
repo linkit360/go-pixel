@@ -70,7 +70,6 @@ func NewNotifierService(conf NotifierConfig) Notifier {
 
 func (service notifier) PixelNotify(msg Pixel) error {
 	msg.SentAt = time.Now().UTC()
-	log.WithField("pixel", fmt.Sprintf("%#v", msg)).Debug("got pixel")
 	event := EventNotify{
 		EventName: "pixels",
 		EventData: msg,
@@ -80,7 +79,7 @@ func (service notifier) PixelNotify(msg Pixel) error {
 		return fmt.Errorf("json.Marshal: %s", err.Error())
 	}
 	log.WithField("body", string(body)).Debug("sent body")
-	service.mq.Publish(amqp.AMQPMessage{service.q.PixelsQueue, 0, body})
+	service.mq.Publish(amqp.AMQPMessage{service.q.PixelsQueue, 0, body, event.EventName})
 	return nil
 }
 
@@ -94,7 +93,7 @@ func (service notifier) PixelTransactionNotify(msg Pixel) error {
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %s", err.Error())
 	}
-	service.mq.Publish(amqp.AMQPMessage{service.q.PixelSentQueue, 0, body})
+	service.mq.Publish(amqp.AMQPMessage{service.q.PixelSentQueue, 0, body, event.EventName})
 	return nil
 }
 
@@ -108,7 +107,7 @@ func (service notifier) PixelUpdateSubscriptionNotify(msg Pixel) error {
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %s", err.Error())
 	}
-	service.mq.Publish(amqp.AMQPMessage{service.q.PixelSentQueue, 0, body})
+	service.mq.Publish(amqp.AMQPMessage{service.q.PixelSentQueue, 0, body, event.EventName})
 	return nil
 }
 
@@ -122,6 +121,6 @@ func (service notifier) PixelRemoveBufferedNotify(msg Pixel) error {
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %s", err.Error())
 	}
-	service.mq.Publish(amqp.AMQPMessage{service.q.PixelsQueue, 1, body})
+	service.mq.Publish(amqp.AMQPMessage{service.q.PixelSentQueue, 1, body, event.EventName})
 	return nil
 }

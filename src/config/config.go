@@ -21,7 +21,7 @@ type ServerConfig struct {
 	Env  string `default:"dev" yaml:"env"`
 }
 type ServiceConfig struct {
-	Queue         config.ConsumeQueueConfig `yaml:"queue"`
+	Pixels        config.ConsumeQueueConfig `yaml:"pixels"`
 	RestorePixels config.ConsumeQueueConfig `yaml:"restore_pixels"`
 	Api           APIConfig                 `yaml:"api"`
 }
@@ -41,7 +41,7 @@ type AppConfig struct {
 }
 
 func LoadConfig() AppConfig {
-	cfg := flag.String("config", "dev/appconfig.yml", "configuration yml file")
+	cfg := flag.String("config", "dev/pixels.yml", "configuration yml file")
 	flag.Parse()
 	var appConfig AppConfig
 
