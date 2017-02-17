@@ -128,6 +128,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			}).Error("cannot determine publisher")
 			goto ack
 		}
+
 		// send pixel
 		ps = inmem_service.PixelSetting{
 			Publisher:  t.Publisher,
@@ -213,25 +214,6 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		t.Endpoint = strings.Replace(t.Endpoint, "%operator_name%", operator.Name, 1)
 		t.Endpoint = strings.Replace(t.Endpoint, "%country_name%", operator.CountryName, 1)
 
-		defer func() {
-			if err := svc.n.PixelUpdateSubscriptionNotify(t); err != nil {
-				Errors.Inc()
-
-				log.WithFields(log.Fields{
-					"tid":   t.Tid,
-					"pixel": t.Pixel,
-					"q":     svc.conf.service.Pixels.Name,
-					"error": err.Error(),
-				}).Error("cannot send pixel update subscription")
-			} else {
-				log.WithFields(log.Fields{
-					"tid":   t.Tid,
-					"q":     svc.conf.service.Pixels.Name,
-					"pixel": t.Pixel,
-				}).Info("sent pixel update subscription")
-			}
-		}()
-
 		client = &http.Client{
 			Timeout: time.Duration(ps.Timeout) * time.Second,
 		}
@@ -293,6 +275,23 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			}).Error("cannot ack")
 			time.Sleep(time.Second)
 			goto ack
+		}
+
+		if err := svc.n.PixelUpdateSubscriptionNotify(t); err != nil {
+			Errors.Inc()
+
+			log.WithFields(log.Fields{
+				"tid":   t.Tid,
+				"pixel": t.Pixel,
+				"q":     svc.conf.service.Pixels.Name,
+				"error": err.Error(),
+			}).Error("cannot send pixel update subscription")
+		} else {
+			log.WithFields(log.Fields{
+				"tid":   t.Tid,
+				"q":     svc.conf.service.Pixels.Name,
+				"pixel": t.Pixel,
+			}).Info("sent pixel update subscription")
 		}
 	}
 }
