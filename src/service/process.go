@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -17,7 +18,6 @@ import (
 	inmem_client "github.com/vostrok/inmem/rpcclient"
 	inmem_service "github.com/vostrok/inmem/service"
 	"github.com/vostrok/pixels/src/notifier"
-	"regexp"
 )
 
 type EventNotifyPixel struct {
