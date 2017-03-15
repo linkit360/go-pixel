@@ -5,6 +5,8 @@ server:
   env: dev
 
 service:
+  setting_type: campaign
+
   pixels:
     name: pixels
     prefetch_count: 10

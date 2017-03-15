@@ -21,6 +21,7 @@ type ServerConfig struct {
 	Env  string `default:"dev" yaml:"env"`
 }
 type ServiceConfig struct {
+	SettingType   string                    `yaml:"setting_type"`
 	Pixels        config.ConsumeQueueConfig `yaml:"pixels"`
 	RestorePixels config.ConsumeQueueConfig `yaml:"restore_pixels"`
 	Api           APIConfig                 `yaml:"api"`

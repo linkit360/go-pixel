@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -44,10 +45,12 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 
 		var operator inmem_service.Operator
 		var ps inmem_service.PixelSetting
-		var cleintErr error
+		var clientErr error
 		var err error
 		var statusCode int
 		var t notifier.Pixel
+		var fields log.Fields
+		var pixelKey string
 
 		log.WithFields(log.Fields{
 			"q":    svc.conf.service.Pixels.Name,
@@ -134,7 +137,13 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			Publisher:  t.Publisher,
 			CampaignId: t.CampaignId,
 		}
-		ps, err = inmem_client.GetPixelSettingByKeyWithRatio(ps.Key())
+
+		if svc.conf.service.SettingType == "operator" {
+			pixelKey = ps.OperatorKey()
+		} else {
+			pixelKey = ps.CampaignKey()
+		}
+		ps, err = inmem_client.GetPixelSettingByKeyWithRatio(pixelKey)
 		if err != nil {
 			err = fmt.Errorf("GetPixelSettingByKey: %s", err.Error())
 			dropped.Inc()
@@ -187,11 +196,15 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 				"trxid=%trxid%&" +
 				"trxtime=%time%&" +
 				"country=%country_name%&" +
-				"operator=%operator_name%"
+				"operator=%operator_name%&" +
+				"service=%service_id%&" +
+				"code=%operator_code%"
 		} else {
 			t.Endpoint = ps.Endpoint
 		}
 
+		t.Endpoint = strings.Replace(t.Endpoint, "%service_id%", strconv.FormatInt(t.ServiceId, 10), -1)
+		t.Endpoint = strings.Replace(t.Endpoint, "%operator_code%", strconv.FormatInt(t.OperatorCode, 10), 1)
 		t.Endpoint = strings.Replace(t.Endpoint, "%pixel%", t.Pixel, 1)
 		t.Endpoint = strings.Replace(t.Endpoint, "%msisdn%", t.Msisdn, 1)
 		t.Endpoint = strings.Replace(t.Endpoint, "%trxid%", fmt.Sprintf("%d%s", time.Now().Unix(), t.Msisdn), 1)
@@ -217,8 +230,8 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		client = &http.Client{
 			Timeout: time.Duration(ps.Timeout) * time.Second,
 		}
-		resp, cleintErr = client.Get(t.Endpoint)
-		if cleintErr != nil || resp.StatusCode != 200 {
+		resp, clientErr = client.Get(t.Endpoint)
+		if clientErr != nil || resp.StatusCode != 200 {
 			publisherError.Inc()
 		} else {
 			Success.Inc()
@@ -226,25 +239,31 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		log.WithFields(log.Fields{
 			"tid":  t.Tid,
 			"q":    svc.conf.service.Pixels.Name,
+			"url":  t.Endpoint,
 			"resp": fmt.Sprintf("%#v", resp),
 		}).Debug("response")
-		if resp != nil {
-			statusCode = resp.StatusCode
-			t.ResponseCode = resp.StatusCode
-		}
 
-		if statusCode == 200 {
-			t.Sent = true
-		}
-		log.WithFields(log.Fields{
+		fields = log.Fields{
 			"pixel":    t.Pixel,
 			"tid":      t.Tid,
 			"campaign": t.CampaignId,
 			"url":      t.Endpoint,
-			"code":     statusCode,
 			"q":        svc.conf.service.Pixels.Name,
 			"sent":     t.Sent,
-		}).Debug("response")
+		}
+		if resp != nil {
+			fields["code"] = resp.StatusCode
+			statusCode = resp.StatusCode
+			t.ResponseCode = resp.StatusCode
+		}
+		if statusCode == 200 {
+			t.Sent = true
+		}
+		if clientErr != nil {
+			fields["error"] = clientErr.Error()
+		}
+
+		log.WithFields(fields).Debug("response")
 
 		if err := svc.n.PixelTransactionNotify(t); err != nil {
 			Errors.Inc()
@@ -263,7 +282,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			}).Info("sent pixel transaction")
 		}
 
-		if cleintErr != nil || statusCode != 200 {
+		if clientErr != nil || statusCode != 200 {
 			goto ack
 		}
 

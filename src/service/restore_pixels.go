@@ -82,6 +82,7 @@ func processRestorePixels(deliveries <-chan amqp.Delivery) {
 				"error":       err.Error(),
 				"msg":         "dropped",
 				"campaign_id": t.CampaignId,
+				"service_id":  t.ServiceId,
 				"q":           svc.conf.service.RestorePixels.Name,
 				"body":        string(msg.Body),
 			}).Warn("cann't process")
@@ -94,11 +95,18 @@ func processRestorePixels(deliveries <-chan amqp.Delivery) {
 			Tid:            t.Tid,
 			Msisdn:         t.Msisdn,
 			CampaignId:     t.CampaignId,
+			ServiceId:      r.ServiceId,
 			SubscriptionId: t.SubscriptionId,
 			OperatorCode:   t.OperatorCode,
 			CountryCode:    t.CountryCode,
 			Pixel:          r.Pixel,
 		}
+		log.WithFields(log.Fields{
+			"campaign_id": t.CampaignId,
+			"service_id":  r.ServiceId,
+			"q":           svc.conf.service.RestorePixels.Name,
+		}).Debug("got restored pixel")
+
 		if err := svc.n.PixelNotify(restoredPixel); err != nil {
 			Restore.Errors.Inc()
 			Errors.Inc()
