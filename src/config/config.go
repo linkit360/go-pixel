@@ -32,13 +32,13 @@ type APIConfig struct {
 }
 
 type AppConfig struct {
-	AppName           string                       `yaml:"app_name"`
-	Service           ServiceConfig                `yaml:"service"`
-	Server            ServerConfig                 `yaml:"server"`
-	InMemClientConfig inmem_client.RPCClientConfig `yaml:"inmem_client"`
-	Consumer          amqp.ConsumerConfig          `yaml:"consumer"`
-	DbConf            db.DataBaseConfig            `yaml:"db"`
-	Notifier          notifier.NotifierConfig      `yaml:"notifier"`
+	AppName           string                    `yaml:"app_name"`
+	Service           ServiceConfig             `yaml:"service"`
+	Server            ServerConfig              `yaml:"server"`
+	InMemClientConfig inmem_client.ClientConfig `yaml:"inmem_client"`
+	Consumer          amqp.ConsumerConfig       `yaml:"consumer"`
+	DbConf            db.DataBaseConfig         `yaml:"db"`
+	Notifier          notifier.NotifierConfig   `yaml:"notifier"`
 }
 
 func LoadConfig() AppConfig {

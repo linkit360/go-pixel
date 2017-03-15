@@ -134,8 +134,9 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 
 		// send pixel
 		ps = inmem_service.PixelSetting{
-			Publisher:  t.Publisher,
-			CampaignId: t.CampaignId,
+			Publisher:    t.Publisher,
+			CampaignId:   t.CampaignId,
+			OperatorCode: t.OperatorCode,
 		}
 
 		if svc.conf.service.SettingType == "operator" {
@@ -249,16 +250,17 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			"campaign": t.CampaignId,
 			"url":      t.Endpoint,
 			"q":        svc.conf.service.Pixels.Name,
-			"sent":     t.Sent,
 		}
 		if resp != nil {
-			fields["code"] = resp.StatusCode
 			statusCode = resp.StatusCode
 			t.ResponseCode = resp.StatusCode
+			if resp.StatusCode == 200 {
+				t.Sent = true
+			}
+			fields["code"] = resp.StatusCode
+			fields["sent"] = t.Sent
 		}
-		if statusCode == 200 {
-			t.Sent = true
-		}
+
 		if clientErr != nil {
 			fields["error"] = clientErr.Error()
 		}

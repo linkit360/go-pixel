@@ -42,7 +42,7 @@ func InitService(
 	appName string,
 	svcConf config.ServiceConfig,
 	serverConfig config.ServerConfig,
-	inMemConf inmem_client.RPCClientConfig,
+	inMemConf inmem_client.ClientConfig,
 	dbConf db.DataBaseConfig,
 	consumerConfig amqp.ConsumerConfig,
 	notifierConf notifier.NotifierConfig,
