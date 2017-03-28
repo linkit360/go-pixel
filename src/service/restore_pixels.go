@@ -87,9 +87,9 @@ func processRestorePixels(deliveries <-chan amqp.Delivery) {
 				"body":        string(msg.Body),
 			}).Warn("cann't process")
 			goto ack
-		} else {
-			Restore.GetBufferPixelDuration.Observe(time.Since(begin).Seconds())
 		}
+
+		Restore.GetBufferPixelDuration.Observe(time.Since(begin).Seconds())
 
 		restoredPixel = notifier.Pixel{
 			Tid:            t.Tid,
@@ -116,22 +116,22 @@ func processRestorePixels(deliveries <-chan amqp.Delivery) {
 			}).Error("sent")
 			msg.Nack(false, true)
 			continue
-		} else {
-			Restore.Success.Inc()
-			log.WithFields(log.Fields{
-				"tid":    t.Tid,
-				"oldtid": r.Tid,
-			}).Debug("sent")
+		}
 
-			if err := svc.n.PixelRemoveBufferedNotify(restoredPixel); err != nil {
-				Restore.Errors.Inc()
-				Errors.Inc()
-				log.WithFields(log.Fields{
-					"error": err.Error(),
-					"tid":   t.Tid,
-					"pixel": t.Pixel,
-				}).Warn("remove sent")
-			}
+		Restore.Success.Inc()
+		log.WithFields(log.Fields{
+			"tid":    t.Tid,
+			"oldtid": r.Tid,
+		}).Debug("sent")
+
+		if err := svc.n.PixelRemoveBufferedNotify(restoredPixel); err != nil {
+			Restore.Errors.Inc()
+			Errors.Inc()
+			log.WithFields(log.Fields{
+				"error": err.Error(),
+				"tid":   t.Tid,
+				"pixel": t.Pixel,
+			}).Warn("remove sent")
 		}
 
 	ack:

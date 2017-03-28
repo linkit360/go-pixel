@@ -15,8 +15,11 @@ rm:
 build:
 	export GOOS=linux; export GOARCH=amd64; \
 	sed -i "s/%VERSION%/$(VERSION)/g" /home/centos/vostrok/utils/metrics/metrics.go; \
-  go build -ldflags "-s -w" -o bin/pixels-linux-amd64; cp bin/pixels-linux-amd64 ~/linkit/ ; cp dev/pixels.yml ~/linkit/;
+  go build -ldflags "-s -w" -o bin/pixels-linux-amd64;
 
+
+cp:
+	 cp bin/pixels-linux-amd64 ~/linkit/ ; cp dev/pixels.yml ~/linkit/;
 
 all:
 	curl "http://localhost:50308/api?limit=10&hours=0"
