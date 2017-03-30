@@ -7,7 +7,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/vostrok/utils/amqp"
+	"github.com/linkit360/go-utils/amqp"
 )
 
 type Pixel struct {

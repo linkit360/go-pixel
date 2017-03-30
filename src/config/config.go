@@ -9,11 +9,11 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/jinzhu/configor"
 
-	inmem_client "github.com/vostrok/inmem/rpcclient"
-	"github.com/vostrok/pixels/src/notifier"
-	"github.com/vostrok/utils/amqp"
-	"github.com/vostrok/utils/config"
-	"github.com/vostrok/utils/db"
+	inmem_client "github.com/linkit360/go-inmem/rpcclient"
+	"github.com/linkit360/go-pixel/src/notifier"
+	"github.com/linkit360/go-utils/amqp"
+	"github.com/linkit360/go-utils/config"
+	"github.com/linkit360/go-utils/db"
 )
 
 type ServerConfig struct {

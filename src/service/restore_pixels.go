@@ -11,8 +11,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/streadway/amqp"
 
-	"github.com/vostrok/pixels/src/notifier"
-	"github.com/vostrok/utils/rec"
+	"github.com/linkit360/go-pixel/src/notifier"
+	"github.com/linkit360/go-utils/rec"
 )
 
 func processRestorePixels(deliveries <-chan amqp.Delivery) {

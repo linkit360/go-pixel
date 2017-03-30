@@ -6,8 +6,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 
-	"github.com/vostrok/pixels/src/notifier"
-	rec "github.com/vostrok/utils/rec"
+	"github.com/linkit360/go-pixel/src/notifier"
+	rec "github.com/linkit360/go-utils/rec"
 )
 
 // does simple thing:

@@ -10,9 +10,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 
-	"github.com/vostrok/pixels/src/config"
-	"github.com/vostrok/pixels/src/service"
-	m "github.com/vostrok/utils/metrics"
+	"github.com/linkit360/go-pixel/src/config"
+	"github.com/linkit360/go-pixel/src/service"
+	m "github.com/linkit360/go-utils/metrics"
 )
 
 func RunServer() {

@@ -16,9 +16,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/streadway/amqp"
 
-	inmem_client "github.com/vostrok/inmem/rpcclient"
-	inmem_service "github.com/vostrok/inmem/service"
-	"github.com/vostrok/pixels/src/notifier"
+	inmem_client "github.com/linkit360/go-inmem/rpcclient"
+	inmem_service "github.com/linkit360/go-inmem/service"
+	"github.com/linkit360/go-pixel/src/notifier"
 )
 
 type EventNotifyPixel struct {

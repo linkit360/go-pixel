@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/vostrok/pixels/src"
+	"github.com/linkit360/go-pixel/src"
 )
 
 func main() {

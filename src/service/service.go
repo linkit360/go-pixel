@@ -11,12 +11,12 @@ import (
 	"github.com/gin-gonic/gin"
 	amqp_driver "github.com/streadway/amqp"
 
-	inmem_client "github.com/vostrok/inmem/rpcclient"
-	"github.com/vostrok/pixels/src/config"
-	"github.com/vostrok/pixels/src/notifier"
-	"github.com/vostrok/utils/amqp"
-	"github.com/vostrok/utils/db"
-	"github.com/vostrok/utils/rec"
+	inmem_client "github.com/linkit360/go-inmem/rpcclient"
+	"github.com/linkit360/go-pixel/src/config"
+	"github.com/linkit360/go-pixel/src/notifier"
+	"github.com/linkit360/go-utils/amqp"
+	"github.com/linkit360/go-utils/db"
+	"github.com/linkit360/go-utils/rec"
 )
 
 var svc Service
