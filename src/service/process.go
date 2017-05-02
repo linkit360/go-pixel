@@ -141,6 +141,8 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 
 		if svc.conf.service.SettingType == "operator" {
 			pixelKey = ps.OperatorKey()
+		} else if svc.conf.service.SettingType == "campaign_operator" {
+			pixelKey = ps.CampaignOperatorKey()
 		} else {
 			pixelKey = ps.CampaignKey()
 		}
@@ -162,11 +164,11 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			dropped.Inc()
 
 			log.WithFields(log.Fields{
-				"pixel": t.Pixel,
-				"q":     svc.conf.service.Pixels.Name,
-				"tid":   t.Tid,
-				"msg":   "dropped",
-			}).Debug("send pixel disabled")
+				"pixel":    t.Pixel,
+				"q":        svc.conf.service.Pixels.Name,
+				"tid":      t.Tid,
+				"pixelKey": pixelKey,
+			}).Info("send pixel disabled!")
 			goto ack
 		}
 		if ps.SkipPixelSend {
