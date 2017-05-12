@@ -37,7 +37,6 @@ notifier:
       host: localhost
       port: 5672
     chan_capacity: 10
-    pending_buffer_path: /home/centos/linkit/pixels_pending.json
 
 consumer:
   reconnect_delay: 10
