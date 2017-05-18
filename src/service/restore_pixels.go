@@ -57,7 +57,7 @@ func processRestorePixels(deliveries <-chan amqp.Delivery) {
 			}).Error("cann't process")
 			goto ack
 		}
-		if t.CampaignId == 0 {
+		if t.CampaignCode == "" {
 			Restore.Dropped.Inc()
 			Restore.Empty.Inc()
 			Restore.Errors.Inc()
@@ -72,7 +72,7 @@ func processRestorePixels(deliveries <-chan amqp.Delivery) {
 		}
 
 		begin = time.Now()
-		r, err = rec.GetBufferPixelByCampaignId(t.CampaignId)
+		r, err = rec.GetBufferPixelByCampaignCode(t.CampaignCode)
 		if err != nil {
 			Restore.Dropped.Inc()
 			Restore.BufferPixelNotFound.Inc()
@@ -81,8 +81,8 @@ func processRestorePixels(deliveries <-chan amqp.Delivery) {
 			log.WithFields(log.Fields{
 				"error":       err.Error(),
 				"msg":         "dropped",
-				"campaign_id": t.CampaignId,
-				"service_id":  t.ServiceId,
+				"campaign_id": t.CampaignCode,
+				"service_id":  t.ServiceCode,
 				"q":           svc.conf.service.RestorePixels.Name,
 				"body":        string(msg.Body),
 			}).Warn("cann't process")
@@ -94,16 +94,16 @@ func processRestorePixels(deliveries <-chan amqp.Delivery) {
 		restoredPixel = notifier.Pixel{
 			Tid:            t.Tid,
 			Msisdn:         t.Msisdn,
-			CampaignId:     t.CampaignId,
-			ServiceId:      r.ServiceId,
+			CampaignCode:   t.CampaignCode,
+			ServiceCode:    r.ServiceCode,
 			SubscriptionId: t.SubscriptionId,
 			OperatorCode:   t.OperatorCode,
 			CountryCode:    t.CountryCode,
 			Pixel:          r.Pixel,
 		}
 		log.WithFields(log.Fields{
-			"campaign_id": t.CampaignId,
-			"service_id":  r.ServiceId,
+			"campaign_id": t.CampaignCode,
+			"service_id":  r.ServiceCode,
 			"q":           svc.conf.service.RestorePixels.Name,
 		}).Debug("got restored pixel")
 

@@ -13,8 +13,8 @@ import (
 type Pixel struct {
 	Tid            string    `json:"tid,omitempty"`
 	Msisdn         string    `json:"msisdn,omitempty"`
-	CampaignId     int64     `json:"campaign_id,omitempty"`
-	ServiceId      int64     `json:"service_id,omitempty"`
+	CampaignCode   string    `json:"campaign_code,omitempty"`
+	ServiceCode    string    `json:"service_code,omitempty"`
 	SubscriptionId int64     `json:"subscription_id,omitempty"`
 	OperatorCode   int64     `json:"operator_code,omitempty"`
 	CountryCode    int64     `json:"country_code,omitempty"`

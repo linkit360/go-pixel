@@ -135,7 +135,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		// send pixel
 		ps = inmem_service.PixelSetting{
 			Publisher:    t.Publisher,
-			CampaignId:   t.CampaignId,
+			CampaignCode: t.CampaignCode,
 			OperatorCode: t.OperatorCode,
 		}
 
@@ -206,7 +206,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			t.Endpoint = ps.Endpoint
 		}
 
-		t.Endpoint = strings.Replace(t.Endpoint, "%service_id%", strconv.FormatInt(t.ServiceId, 10), -1)
+		t.Endpoint = strings.Replace(t.Endpoint, "%service_id%", t.ServiceCode, -1)
 		t.Endpoint = strings.Replace(t.Endpoint, "%operator_code%", strconv.FormatInt(t.OperatorCode, 10), 1)
 		t.Endpoint = strings.Replace(t.Endpoint, "%pixel%", t.Pixel, 1)
 		t.Endpoint = strings.Replace(t.Endpoint, "%msisdn%", t.Msisdn, 1)
@@ -249,7 +249,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		fields = log.Fields{
 			"pixel":    t.Pixel,
 			"tid":      t.Tid,
-			"campaign": t.CampaignId,
+			"campaign": t.CampaignCode,
 			"url":      t.Endpoint,
 			"q":        svc.conf.service.Pixels.Name,
 		}

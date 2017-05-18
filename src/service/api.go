@@ -50,7 +50,7 @@ func api(c *gin.Context) {
 		svc.n.PixelNotify(notifier.Pixel{
 			Tid:            v.Tid,
 			Msisdn:         v.Msisdn,
-			CampaignId:     v.CampaignId,
+			CampaignCode:   v.CampaignCode,
 			SubscriptionId: v.SubscriptionId,
 			OperatorCode:   v.OperatorCode,
 			CountryCode:    v.CountryCode,
