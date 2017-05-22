@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	amqp_driver "github.com/streadway/amqp"
 
-	inmem_client "github.com/linkit360/go-inmem/rpcclient"
+	inmem_client "github.com/linkit360/go-mid/rpcclient"
 	"github.com/linkit360/go-pixel/src/config"
 	"github.com/linkit360/go-pixel/src/notifier"
 	"github.com/linkit360/go-utils/amqp"

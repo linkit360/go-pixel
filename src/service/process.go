@@ -17,8 +17,8 @@ import (
 	"github.com/streadway/amqp"
 
 	acceptor "github.com/linkit360/go-acceptor-structs"
-	inmem_client "github.com/linkit360/go-inmem/rpcclient"
-	inmem_service "github.com/linkit360/go-inmem/service"
+	inmem_client "github.com/linkit360/go-mid/rpcclient"
+	inmem_service "github.com/linkit360/go-mid/service"
 	"github.com/linkit360/go-pixel/src/notifier"
 )
 
