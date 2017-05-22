@@ -16,6 +16,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/streadway/amqp"
 
+	acceptor "github.com/linkit360/go-acceptor-structs"
 	inmem_client "github.com/linkit360/go-inmem/rpcclient"
 	inmem_service "github.com/linkit360/go-inmem/service"
 	"github.com/linkit360/go-pixel/src/notifier"
@@ -43,7 +44,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 
 	for msg := range deliveries {
 
-		var operator inmem_service.Operator
+		var operator acceptor.Operator
 		var ps inmem_service.PixelSetting
 		var clientErr error
 		var err error
