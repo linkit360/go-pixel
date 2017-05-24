@@ -17,8 +17,8 @@ import (
 	"github.com/streadway/amqp"
 
 	acceptor "github.com/linkit360/go-acceptor-structs"
-	inmem_client "github.com/linkit360/go-mid/rpcclient"
-	inmem_service "github.com/linkit360/go-mid/service"
+	mid_client "github.com/linkit360/go-mid/rpcclient"
+	mid "github.com/linkit360/go-mid/service"
 	"github.com/linkit360/go-pixel/src/notifier"
 )
 
@@ -45,7 +45,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 	for msg := range deliveries {
 
 		var operator acceptor.Operator
-		var ps inmem_service.PixelSetting
+		var ps mid.PixelSetting
 		var clientErr error
 		var err error
 		var statusCode int
@@ -99,7 +99,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 				t.Publisher = "SlimSpot"
 			}
 			if t.Publisher == "" {
-				publishers, err := inmem_client.GetAllPublishers()
+				publishers, err := mid_client.GetAllPublishers()
 				if err != nil {
 					log.WithFields(log.Fields{
 						"error": err.Error(),
@@ -133,12 +133,10 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			goto ack
 		}
 
-		// send pixel
-		ps = inmem_service.PixelSetting{
-			Publisher:    t.Publisher,
-			CampaignCode: t.CampaignCode,
-			OperatorCode: t.OperatorCode,
-		}
+		ps = mid.PixelSetting{}
+		ps.SetPublisher(t.Publisher)
+		ps.SetCampaignCode(t.CampaignCode)
+		ps.SetOperatorCode(t.OperatorCode)
 
 		if svc.conf.service.SettingType == "operator" {
 			pixelKey = ps.OperatorKey()
@@ -147,7 +145,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		} else {
 			pixelKey = ps.CampaignKey()
 		}
-		ps, err = inmem_client.GetPixelSettingByKeyWithRatio(pixelKey)
+		ps, err = mid_client.GetPixelSettingByKeyWithRatio(pixelKey)
 		if err != nil {
 			err = fmt.Errorf("GetPixelSettingByKey: %s", err.Error())
 			dropped.Inc()
@@ -214,7 +212,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		t.Endpoint = strings.Replace(t.Endpoint, "%trxid%", fmt.Sprintf("%d%s", time.Now().Unix(), t.Msisdn), 1)
 		t.Endpoint = strings.Replace(t.Endpoint, "%time%", time.Now().UTC().Format("2006-01-02+15:04:05"), 1)
 
-		operator, err = inmem_client.GetOperatorByCode(t.OperatorCode)
+		operator, err = mid_client.GetOperatorByCode(t.OperatorCode)
 		if err != nil {
 			err = fmt.Errorf("GetPixelSettingByKey: %s", err.Error())
 			dropped.Inc()
