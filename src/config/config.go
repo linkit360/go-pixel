@@ -9,7 +9,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/jinzhu/configor"
 
-	inmem_client "github.com/linkit360/go-mid/rpcclient"
+	mid_client "github.com/linkit360/go-mid/rpcclient"
 	"github.com/linkit360/go-pixel/src/notifier"
 	"github.com/linkit360/go-utils/amqp"
 	"github.com/linkit360/go-utils/config"
@@ -32,13 +32,13 @@ type APIConfig struct {
 }
 
 type AppConfig struct {
-	AppName           string                    `yaml:"app_name"`
-	Service           ServiceConfig             `yaml:"service"`
-	Server            ServerConfig              `yaml:"server"`
-	InMemClientConfig inmem_client.ClientConfig `yaml:"inmem_client"`
-	Consumer          amqp.ConsumerConfig       `yaml:"consumer"`
-	DbConf            db.DataBaseConfig         `yaml:"db"`
-	Notifier          notifier.NotifierConfig   `yaml:"notifier"`
+	AppName   string                  `yaml:"app_name"`
+	Service   ServiceConfig           `yaml:"service"`
+	Server    ServerConfig            `yaml:"server"`
+	MidConfig mid_client.ClientConfig `yaml:"mid_client"`
+	Consumer  amqp.ConsumerConfig     `yaml:"consumer"`
+	DbConf    db.DataBaseConfig       `yaml:"db"`
+	Notifier  notifier.NotifierConfig `yaml:"notifier"`
 }
 
 func LoadConfig() AppConfig {

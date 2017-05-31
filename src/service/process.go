@@ -16,10 +16,10 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/streadway/amqp"
 
-	acceptor "github.com/linkit360/go-acceptor-structs"
 	mid_client "github.com/linkit360/go-mid/rpcclient"
 	mid "github.com/linkit360/go-mid/service"
 	"github.com/linkit360/go-pixel/src/notifier"
+	xmp_api_structs "github.com/linkit360/xmp-api/src/structs"
 )
 
 type EventNotifyPixel struct {
@@ -44,7 +44,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 
 	for msg := range deliveries {
 
-		var operator acceptor.Operator
+		var operator xmp_api_structs.Operator
 		var ps mid.PixelSetting
 		var clientErr error
 		var err error

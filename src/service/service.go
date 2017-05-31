@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	amqp_driver "github.com/streadway/amqp"
 
-	inmem_client "github.com/linkit360/go-mid/rpcclient"
+	mid_client "github.com/linkit360/go-mid/rpcclient"
 	"github.com/linkit360/go-pixel/src/config"
 	"github.com/linkit360/go-pixel/src/notifier"
 	"github.com/linkit360/go-utils/amqp"
@@ -42,7 +42,7 @@ func InitService(
 	appName string,
 	svcConf config.ServiceConfig,
 	serverConfig config.ServerConfig,
-	inMemConf inmem_client.ClientConfig,
+	midConf mid_client.ClientConfig,
 	dbConf db.DataBaseConfig,
 	consumerConfig amqp.ConsumerConfig,
 	notifierConf notifier.NotifierConfig,
@@ -60,8 +60,8 @@ func InitService(
 
 	rec.Init(dbConf)
 
-	if err := inmem_client.Init(inMemConf); err != nil {
-		log.WithField("error", err.Error()).Fatal("inmem dial error")
+	if err := mid_client.Init(midConf); err != nil {
+		log.WithField("error", err.Error()).Fatal("mid dial error")
 	}
 
 	svc.n = notifier.NewNotifierService(notifierConf)

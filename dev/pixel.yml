@@ -21,7 +21,7 @@ service:
     limit: 500
     hours: 0
 
-inmem_client:
+mid_client:
   port: 50307
   timeout: 10
 
