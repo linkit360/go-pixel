@@ -52,6 +52,7 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 		var t notifier.Pixel
 		var fields log.Fields
 		var pixelKey string
+		var country string
 
 		log.WithFields(log.Fields{
 			"q":    svc.conf.service.Pixels.Name,
@@ -226,8 +227,9 @@ func processPixels(deliveries <-chan amqp.Delivery) {
 			}).Error("can't get operator name by code")
 			goto ack
 		}
+		country = mid_client.GetCountryName()
 		t.Endpoint = strings.Replace(t.Endpoint, "%operator_name%", operator.Name, 1)
-		t.Endpoint = strings.Replace(t.Endpoint, "%country_name%", operator.CountryName, 1)
+		t.Endpoint = strings.Replace(t.Endpoint, "%country_name%", country, 1)
 
 		client = &http.Client{
 			Timeout: time.Duration(ps.Timeout) * time.Second,
