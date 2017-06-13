@@ -3,8 +3,8 @@ package service
 import (
 	"strconv"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/linkit360/go-pixel/src/notifier"
 	rec "github.com/linkit360/go-utils/rec"
