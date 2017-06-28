@@ -38,7 +38,6 @@ func RunServer() {
 	service.AddPublisherHandler(r)
 	m.AddHandler(r)
 
-	r.Run(":" + appConfig.Server.Port)
-
-	log.WithField("port", appConfig.Server.Port).Info("pixels init")
+	r.Run(appConfig.Server.Host + ":" + appConfig.Server.Port)
+	log.WithField("dsn", appConfig.Server.Host+":"+appConfig.Server.Port).Info("init")
 }

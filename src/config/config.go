@@ -17,6 +17,7 @@ import (
 )
 
 type ServerConfig struct {
+	Host string `default:"127.0.0.1" yaml:"host"`
 	Port string `default:"50308" yaml:"port"`
 	Env  string `default:"dev" yaml:"env"`
 }
